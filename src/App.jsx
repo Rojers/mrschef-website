@@ -746,7 +746,7 @@ export default function App(){
             </div>
           </div>
 
-          {/* QUICK CONTACT */
+          {/* QUICK CONTACT */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,margin:"13px 12px 0"}}>
             <a href={WA} target="_blank" rel="noreferrer" style={{background:"linear-gradient(135deg,#15803D,#16A34A)",borderRadius:15,padding:"12px",textDecoration:"none",display:"flex",alignItems:"center",gap:9}}>
               <span style={{fontSize:"1.25rem"}}>💬</span>
