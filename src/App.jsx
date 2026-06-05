@@ -22,8 +22,8 @@ const DEF_AREAS = ["Kalkaji","Saket","CR Park","Lajpat Nagar","Gurgaon","Faridab
 const DEF_SETTINGS = {
   businessName:"Mrs Chef", tagline:"Home Kitchen • Delhi NCR",
   heroText:"Crafted for Your Special Moments",
-  phone:"+91 98765 43210", whatsapp:"919876543210",
-  facebook:"https://facebook.com/mrschef",
+  phone:"+91 8700 642925", whatsapp:"918700642925",
+  facebook:"https://www.facebook.com/share/1aFfHn8N7D/",
   zomato:"https://link.zomato.com/xqzv/rshare?id=13826583030563af3",
   gstin:"07AAAAA0000A1Z5", gstPercent:5,
   about:"Mrs Chef started as a labour of love — home-cooked food made with the finest ingredients and decades of kitchen wisdom.",
