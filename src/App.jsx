@@ -473,22 +473,53 @@ function ManualOrderForm({onSave,onClose,T,acc,food,combos}){
 
 // ── ADMIN PANEL ───────────────────────────────────────────────────────────────
 // ── IMAGE UPLOADER — converts photo to base64 data URL (works offline, no server needed)
-function ImageUploader({label, currentImg, onUpload, T, acc, G, size="medium"}){
-  const [preview,setPreview] = useState(currentImg||"");
+function ImageUploader({label, currentImg, onUpload, T, acc, G, size="medium"}){  const [preview,setPreview] = useState(currentImg||"");
   const [urlInput,setUrlInput] = useState("");
-  const [tab,setTab] = useState("upload"); // upload | url
-  const inputRef = React.useRef(null);
+  const [tab,setTab] = useState("upload");
+  const [uploading,setUploading] = useState(false);
+  const [uploadMsg,setUploadMsg] = useState("");
+  const fileRef = useRef(null);
 
-  const handleFile = (e) => {
+  // Use imgbb free image hosting - auto returns a permanent URL
+  const IMGBB_KEY = "2e46be8f5e6b01a2b6c4e8d9f1a3c5e7"; // replace with your free key from imgbb.com
+
+  const handleFile = async (e) => {
     const file = e.target.files?.[0];
     if(!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const dataUrl = ev.target.result;
-      setPreview(dataUrl);
-      onUpload(dataUrl);
-    };
-    reader.readAsDataURL(file);
+    setUploading(true);
+    setUploadMsg("Uploading...");
+    try {
+      // Convert to base64
+      const b64 = await new Promise((res,rej)=>{
+        const r = new FileReader();
+        r.onload = ()=>res(r.result.split(",")[1]);
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
+      // Show local preview immediately
+      const localUrl = "data:image/jpeg;base64,"+b64;
+      setPreview(localUrl);
+      onUpload(localUrl);
+      setUploadMsg("✅ Photo loaded! (stored locally)");
+      // Try imgbb upload for permanent URL
+      try {
+        const fd = new FormData();
+        fd.append("image", b64);
+        const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {method:"POST",body:fd});
+        const data = await res.json();
+        if(data.success){
+          const url = data.data.display_url;
+          setPreview(url);
+          onUpload(url);
+          setUploadMsg("✅ Uploaded! URL saved automatically.");
+        }
+      } catch(e){
+        setUploadMsg("✅ Photo stored locally (no internet for cloud upload)");
+      }
+    } catch(e){
+      setUploadMsg("❌ Failed to load photo");
+    }
+    setUploading(false);
   };
 
   const handleUrl = () => {
@@ -496,6 +527,7 @@ function ImageUploader({label, currentImg, onUpload, T, acc, G, size="medium"}){
       setPreview(urlInput.trim());
       onUpload(urlInput.trim());
       setUrlInput("");
+      setUploadMsg("✅ URL saved");
     }
   };
 
@@ -508,29 +540,34 @@ function ImageUploader({label, currentImg, onUpload, T, acc, G, size="medium"}){
       {preview&&(
         <div style={{height:h,borderRadius:12,overflow:"hidden",marginBottom:10,border:`1px solid ${T.border}`,position:"relative",background:T.card2}}>
           <img src={preview} alt="preview" style={{width:"100%",height:"100%",objectFit:size==="logo"?"contain":"cover"}} onError={()=>setPreview("")}/>
-          <button onClick={()=>{setPreview("");onUpload("");}} style={{position:"absolute",top:8,right:8,background:"rgba(0,0,0,.6)",border:"none",color:"#fff",width:26,height:26,borderRadius:"50%",cursor:"pointer",fontSize:".7rem"}}>✕</button>
+          <button onClick={()=>{setPreview("");onUpload("");setUploadMsg("");}} style={{position:"absolute",top:8,right:8,background:"rgba(0,0,0,.7)",border:"none",color:"#fff",width:28,height:28,borderRadius:"50%",cursor:"pointer",fontSize:".75rem"}}>✕</button>
         </div>
       )}
       {/* Tabs */}
       <div style={{display:"flex",gap:5,marginBottom:8}}>
-        {[["upload","📷 Upload Photo"],["url","🔗 Paste URL"]].map(([t,lb])=>(
-          <button key={t} onClick={()=>setTab(t)} style={{flex:1,padding:"7px",border:`1px solid ${tab===t?acc:T.border}`,borderRadius:9,background:tab===t?`${acc}18`:"transparent",color:tab===t?acc:T.muted,fontSize:".68rem",fontWeight:tab===t?700:500,cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>{lb}</button>
+        {[["upload","📷 From Phone"],["url","🔗 Paste URL"]].map(([t,lb])=>(
+          <button key={t} onClick={()=>setTab(t)} style={{flex:1,padding:"8px",border:`1px solid ${tab===t?acc:T.border}`,borderRadius:9,background:tab===t?`${acc}18`:"transparent",color:tab===t?acc:T.muted,fontSize:".7rem",fontWeight:tab===t?700:500,cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>{lb}</button>
         ))}
       </div>
       {tab==="upload"&&(
         <div>
-          <input ref={inputRef} type="file" accept="image/*" onChange={handleFile} style={{display:"none"}}/>
-          <button onClick={()=>inputRef.current?.click()} style={{width:"100%",padding:"12px",background:T.card2,color:T.text,border:`2px dashed ${T.border}`,borderRadius:11,cursor:"pointer",fontFamily:"'Poppins',sans-serif",fontSize:".8rem",fontWeight:600}}>
-            📷 Tap to choose photo from your phone
+          <input ref={fileRef} type="file" accept="image/*" capture="environment" onChange={handleFile} style={{display:"none"}}/>
+          <button onClick={()=>fileRef.current?.click()} disabled={uploading}
+            style={{width:"100%",padding:"13px",background:uploading?T.card3:T.card2,color:uploading?T.muted:T.text,border:`2px dashed ${uploading?acc:T.border}`,borderRadius:11,cursor:uploading?"wait":"pointer",fontFamily:"'Poppins',sans-serif",fontSize:".82rem",fontWeight:600,transition:"all .2s"}}>
+            {uploading?"⏳ Uploading photo...":"📷 Take Photo or Choose from Gallery"}
           </button>
-          <div style={{fontSize:".6rem",color:T.muted,marginTop:5,textAlign:"center"}}>Photo stays on your device — stored as data URL</div>
+          {uploadMsg&&<div style={{fontSize:".65rem",color:uploadMsg.includes("✅")?G.green:G.red,marginTop:6,textAlign:"center",fontWeight:600}}>{uploadMsg}</div>}
+          <div style={{fontSize:".6rem",color:T.muted,marginTop:4,textAlign:"center"}}>Photo is uploaded automatically and URL is saved</div>
         </div>
       )}
       {tab==="url"&&(
-        <div style={{display:"flex",gap:7}}>
-          <input value={urlInput} onChange={e=>setUrlInput(e.target.value)} placeholder="https://images.unsplash.com/..."
-            style={{flex:1,padding:"9px 11px",border:`1px solid ${T.border}`,borderRadius:9,fontFamily:"'Poppins',sans-serif",fontSize:".78rem",color:T.text,background:T.card2,outline:"none"}}/>
-          <button onClick={handleUrl} style={{padding:"9px 14px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:9,fontSize:".76rem",fontWeight:800,cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Use</button>
+        <div>
+          <div style={{display:"flex",gap:7}}>
+            <input value={urlInput} onChange={e=>setUrlInput(e.target.value)} placeholder="https://images.unsplash.com/..."
+              style={{flex:1,padding:"10px 11px",border:`1px solid ${T.border}`,borderRadius:9,fontFamily:"'Poppins',sans-serif",fontSize:".78rem",color:T.text,background:T.card2,outline:"none"}}/>
+            <button onClick={handleUrl} style={{padding:"10px 14px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:9,fontSize:".76rem",fontWeight:800,cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Use</button>
+          </div>
+          {uploadMsg&&<div style={{fontSize:".65rem",color:G.green,marginTop:5,fontWeight:600}}>{uploadMsg}</div>}
         </div>
       )}
     </div>
@@ -540,112 +577,113 @@ function ImageUploader({label, currentImg, onUpload, T, acc, G, size="medium"}){
 
 // ── BUSINESS FORM — standalone component so hooks work correctly on mobile ────
 function BusinessForm({settings, setSettings, T, acc, G, show, onBack}){
-  const [d,setD] = useState({
-    businessName: settings.businessName||"",
-    tagline:      settings.tagline||"",
-    heroText:     settings.heroText||"",
-    phone:        settings.phone||"",
-    whatsapp:     settings.whatsapp||"",
-    facebook:     settings.facebook||"",
-    zomato:       settings.zomato||"",
-    city:         settings.city||"",
-    gstin:        settings.gstin||"",
-    gstPercent:   String(settings.gstPercent||"5"),
-    about:        settings.about||"",
-    founderName:  settings.founderName||"",
-    founderNote:  settings.founderNote||"",
-    eventsCount:  settings.eventsCount||"100+",
-    logoImg:      settings.logoImg||"",
-    heroImg:      settings.heroImg||"",
-    founderImg:   settings.founderImg||"",
-  });
+  // Uncontrolled inputs - ONLY way to prevent cursor loss on mobile
+  // Refs hold values, only read on Save
+  const refs = {
+    businessName: useRef(null),
+    tagline:      useRef(null),
+    heroText:     useRef(null),
+    phone:        useRef(null),
+    whatsapp:     useRef(null),
+    facebook:     useRef(null),
+    zomato:       useRef(null),
+    city:         useRef(null),
+    gstin:        useRef(null),
+    gstPercent:   useRef(null),
+    founderName:  useRef(null),
+    founderNote:  useRef(null),
+    eventsCount:  useRef(null),
+    about:        useRef(null),
+  };
+  const [logoImg,  setLogoImg]  = useState(settings.logoImg||"");
+  const [heroImg,  setHeroImg]  = useState(settings.heroImg||"");
+  const [founderImg,setFounderImg]=useState(settings.founderImg||"");
 
-  const IS={width:"100%",padding:"11px 13px",border:`1px solid ${T.border}`,
-    borderRadius:11,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",
-    color:T.text,background:T.card2,outline:"none"};
+  const IS = {
+    width:"100%", padding:"11px 13px",
+    border:`1px solid ${T.border}`, borderRadius:11,
+    fontFamily:"'Poppins',sans-serif", fontSize:".86rem",
+    color:T.text, background:T.card2, outline:"none",
+    WebkitAppearance:"none",
+  };
 
-  const fields=[
-    ["Business Name","businessName","text"],
-    ["Tagline","tagline","text"],
-    ["Hero Text","heroText","text"],
-    ["Phone","phone","tel"],
-    ["WhatsApp (digits only — no +)","whatsapp","text"],
-    ["Facebook URL","facebook","url"],
-    ["Zomato Link","zomato","url"],
-    ["City","city","text"],
-    ["GSTIN","gstin","text"],
-    ["GST %","gstPercent","number"],
+  const fields = [
+    ["Business Name",        "businessName", "text"],
+    ["Tagline",              "tagline",      "text"],
+    ["Hero Text",            "heroText",     "text"],
+    ["Phone Number",         "phone",        "tel"],
+    ["WhatsApp (digits only, no +)","whatsapp","text"],
+    ["Facebook URL",         "facebook",     "url"],
+    ["Zomato Link",          "zomato",       "url"],
+    ["City / Area",          "city",         "text"],
+    ["GSTIN",                "gstin",        "text"],
+    ["GST %",                "gstPercent",   "number"],
+    ["Founder / Chef Name",  "founderName",  "text"],
+    ["Founder Title & Note", "founderNote",  "text"],
+    ["Events Count (e.g. 100+)","eventsCount","text"],
   ];
 
-  const save=()=>{
-    setSettings(s=>({...s,...d,gstPercent:Number(d.gstPercent)||5,
-      logoImg:d.logoImg||s.logoImg,
-      heroImg:d.heroImg||s.heroImg,
-      founderImg:d.founderImg||s.founderImg,
-    }));
+  const saveAll = () => {
+    const upd = {};
+    fields.forEach(([,key,tp])=>{
+      const el = refs[key]?.current;
+      if(el) upd[key] = tp==="number" ? Number(el.value)||0 : el.value;
+    });
+    const aboutEl = refs.about?.current;
+    if(aboutEl) upd.about = aboutEl.value;
+    upd.logoImg   = logoImg;
+    upd.heroImg   = heroImg;
+    upd.founderImg= founderImg;
+    setSettings(s=>({...s,...upd}));
     show("✅ Business info saved!");
+    onBack();
   };
 
   return(
-    <div style={{fontFamily:"'Poppins',sans-serif",background:T.bg,minHeight:"100vh",
-      maxWidth:430,margin:"0 auto",color:T.text,overflowX:"hidden"}}>
-      {/* Header */}
-      <div style={{display:"flex",alignItems:"center",gap:10,padding:"14px 16px",
-        borderBottom:`1px solid ${T.border}`,position:"sticky",top:0,background:T.bg,zIndex:10}}>
-        <button onClick={onBack} style={{background:T.card2,border:`1px solid ${T.border}`,
-          color:T.text,width:34,height:34,borderRadius:"50%",cursor:"pointer",fontSize:".9rem"}}>←</button>
+    <div style={{fontFamily:"'Poppins',sans-serif",background:T.bg,minHeight:"100vh",maxWidth:430,margin:"0 auto",color:T.text,overflowX:"hidden"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,padding:"14px 16px",borderBottom:`1px solid ${T.border}`,position:"sticky",top:0,background:T.bg,zIndex:10}}>
+        <button onClick={onBack} style={{background:T.card2,border:`1px solid ${T.border}`,color:T.text,width:34,height:34,borderRadius:"50%",cursor:"pointer",fontSize:".9rem"}}>←</button>
         <div style={{fontSize:"1rem",fontWeight:900,color:T.text}}>🏢 Business Info</div>
       </div>
       <div style={{padding:"14px"}}>
-        {/* ── IMAGE UPLOADS ── */}
-        <div style={{background:T.card2,borderRadius:14,padding:"13px",marginBottom:16,border:`1px solid ${T.border}`}}>
-          <div style={{fontSize:".78rem",fontWeight:800,color:acc,marginBottom:12}}>📸 Photos & Logo</div>
-          <ImageUploader label="App Logo" currentImg={d.logoImg} onUpload={v=>setD(p=>({...p,logoImg:v}))} T={T} acc={acc} G={G} size="logo"/>
-          <ImageUploader label="Home Screen Hero Photo" currentImg={d.heroImg} onUpload={v=>setD(p=>({...p,heroImg:v}))} T={T} acc={acc} G={G} size="large"/>
-          <ImageUploader label="Founder Photo (About section)" currentImg={d.founderImg} onUpload={v=>setD(p=>({...p,founderImg:v}))} T={T} acc={acc} G={G} size="medium"/>
-        </div>
-        {/* ── EXTRA EDITABLE FIELDS ── */}
-        {[["Founder Name","founderName"],["Founder Note / Title","founderNote"],["Events Count (e.g. 100+)","eventsCount"]].map(([lb,key])=>(
-          <div key={key} style={{marginBottom:12}}>
-            <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:4,textTransform:"uppercase"}}>{lb}</div>
-            <input value={d[key]||""} onChange={e=>setD(p=>({...p,[key]:e.target.value}))} style={IS}/>
-          </div>
-        ))}
-        {/* ── MAIN FIELDS ── */}
-        {fields.map(([lb,key])=>(
+        {/* Text fields - all uncontrolled */}
+        {fields.map(([lb,key,tp])=>(
           <div key={key} style={{marginBottom:13}}>
-            <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:5,
-              textTransform:"uppercase",letterSpacing:".05em"}}>{lb}</div>
+            <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:5,textTransform:"uppercase",letterSpacing:".05em"}}>{lb}</div>
             <input
-              value={d[key]}
-              onChange={e=>setD(prev=>({...prev,[key]:e.target.value}))}
+              ref={refs[key]}
+              type={tp}
+              defaultValue={String(settings[key]||"")}
               style={IS}
             />
           </div>
         ))}
-        <div style={{marginBottom:16}}>
-          <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:5,textTransform:"uppercase"}}>About Us</div>
+        {/* About textarea - uncontrolled */}
+        <div style={{marginBottom:14}}>
+          <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:5,textTransform:"uppercase"}}>About Us Text</div>
           <textarea
-            value={d.about}
-            onChange={e=>setD(prev=>({...prev,about:e.target.value}))}
+            ref={refs.about}
+            defaultValue={settings.about||""}
             rows={6}
             style={{...IS,resize:"none",lineHeight:1.65}}
           />
         </div>
-        <button onClick={save} style={{width:"100%",padding:"13px",
-          background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",
-          borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".88rem",fontWeight:900,cursor:"pointer"}}>
-          Save All ✓
+        {/* Image uploaders */}
+        <ImageUploader label="App Logo" currentImg={logoImg} onUpload={setLogoImg} T={T} acc={acc} G={G} size="logo"/>
+        <ImageUploader label="Home Screen Hero Photo" currentImg={heroImg} onUpload={setHeroImg} T={T} acc={acc} G={G} size="large"/>
+        <ImageUploader label="Founder / Chef Photo" currentImg={founderImg} onUpload={setFounderImg} T={T} acc={acc} G={G} size="medium"/>
+        {/* Save */}
+        <button onClick={saveAll}
+          style={{width:"100%",padding:"13px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".88rem",fontWeight:900,cursor:"pointer",marginTop:4}}>
+          Save All Info ✓
         </button>
-        <div style={{textAlign:"center",fontSize:".63rem",color:T.muted,marginTop:8}}>
-          All fields save together when you tap Save
+        <div style={{textAlign:"center",fontSize:".63rem",color:T.muted,marginTop:8,marginBottom:24}}>
+          Tap Save after editing all fields — inputs don't lose focus while typing
         </div>
       </div>
     </div>
   );
 }
-
-
 // ── SHARED ADMIN UI COMPONENTS (top-level so they never remount on re-render) ─
 function AdminInp({label, value, onChange, type="text", ph="", T}){
   return(
@@ -692,7 +730,90 @@ function AdminSHdr({title, icon, onBack, T}){
 }
 
 
-function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,combos,setCombos,offers,setOffers}){
+// ── REVIEWS SECTION — standalone (hooks can't be inside if blocks) ────────
+function ReviewsSection({reviews,setReviews,T,acc,G,onBack}){
+  const [rvs,setRvs] = useState([...reviews]);
+  const cols=["#FF6B6B","#4FC3F7","#C9A84C","#CE93D8","#22C55E","#FFB74D","#F0B429","#3B82F6"];
+  const S={fontFamily:"'Poppins',sans-serif",background:T.bg,minHeight:"100vh",maxWidth:430,margin:"0 auto",color:T.text,overflowX:"hidden"};
+  const IS={width:"100%",padding:"9px 11px",border:`1px solid ${T.border}`,borderRadius:10,fontFamily:"'Poppins',sans-serif",fontSize:".8rem",color:T.text,background:T.card2,outline:"none"};
+  const save=()=>{setReviews(rvs);};
+  return(
+    <div style={S}>
+      <div style={{display:"flex",alignItems:"center",gap:10,padding:"14px 16px",borderBottom:`1px solid ${T.border}`,position:"sticky",top:0,background:T.bg,zIndex:10}}>
+        <button onClick={()=>{save();onBack();}} style={{background:T.card2,border:`1px solid ${T.border}`,color:T.text,width:34,height:34,borderRadius:"50%",cursor:"pointer",fontSize:".9rem"}}>←</button>
+        <div style={{fontSize:"1rem",fontWeight:900,color:T.text}}>⭐ Customer Reviews</div>
+      </div>
+      <div style={{padding:"12px 14px"}}>
+        <div style={{fontSize:".7rem",color:T.muted2,marginBottom:12,lineHeight:1.5}}>Edit or remove reviews. Changes show on the Reviews page.</div>
+        {rvs.map((r,i)=>(
+          <div key={i} style={{background:T.card,borderRadius:16,padding:"13px",marginBottom:10,border:`1px solid ${T.border}`}}>
+            <div style={{display:"flex",gap:7,marginBottom:8}}>
+              <div>
+                <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:3,textTransform:"uppercase"}}>Name</div>
+                <input value={r.name} onChange={e=>{const n=[...rvs];n[i]={...n[i],name:e.target.value};setRvs(n);}} style={{...IS,width:120}}/>
+              </div>
+              <div>
+                <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:3,textTransform:"uppercase"}}>Location</div>
+                <input value={r.loc} onChange={e=>{const n=[...rvs];n[i]={...n[i],loc:e.target.value};setRvs(n);}} style={{...IS,width:100}}/>
+              </div>
+              <div style={{marginLeft:"auto"}}>
+                <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:3,textTransform:"uppercase"}}>Color</div>
+                <div style={{display:"flex",gap:4,flexWrap:"wrap",width:60}}>
+                  {cols.map(c=><div key={c} onClick={()=>{const n=[...rvs];n[i]={...n[i],col:c};setRvs(n);}} style={{width:14,height:14,borderRadius:"50%",background:c,cursor:"pointer",border:`2px solid ${r.col===c?"#fff":"transparent"}`}}/>)}
+                </div>
+              </div>
+            </div>
+            <div style={{marginBottom:8}}>
+              <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:3,textTransform:"uppercase"}}>Review Text</div>
+              <textarea value={r.text} onChange={e=>{const n=[...rvs];n[i]={...n[i],text:e.target.value};setRvs(n);}} rows={2} style={{...IS,resize:"none"}}/>
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{display:"flex",gap:3}}>{[1,2,3,4,5].map(s=><span key={s} onClick={()=>{const n=[...rvs];n[i]={...n[i],stars:s};setRvs(n);}} style={{fontSize:"1.1rem",cursor:"pointer",opacity:s<=r.stars?1:.25}}>⭐</span>)}</div>
+              <button onClick={()=>setRvs(rvs.filter((_,j)=>j!==i))} style={{background:`${G.red}18`,color:G.red,border:`1px solid ${G.red}33`,padding:"4px 11px",borderRadius:50,fontSize:".63rem",cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Remove</button>
+            </div>
+          </div>
+        ))}
+        <button onClick={()=>setRvs([...rvs,{name:"New Customer",loc:"Delhi",stars:5,text:"Great food!",av:String.fromCharCode(65+rvs.length%26),col:cols[rvs.length%cols.length]}])} style={{width:"100%",padding:"11px",background:T.card2,color:acc,border:`1px solid ${acc}44`,borderRadius:50,fontSize:".8rem",fontWeight:700,cursor:"pointer",fontFamily:"'Poppins',sans-serif",marginBottom:10}}>+ Add Review</button>
+        <button onClick={()=>{save();onBack();}} style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",fontWeight:900,cursor:"pointer"}}>Save Reviews ✓</button>
+      </div>
+    </div>
+  );
+}
+
+// ── AREAS SECTION — standalone ─────────────────────────────────────────────
+function AreasSection({areas,setAreas,T,acc,G,onBack}){
+  const [avs,setAvs] = useState([...areas]);
+  const [newArea,setNewArea] = useState("");
+  const S={fontFamily:"'Poppins',sans-serif",background:T.bg,minHeight:"100vh",maxWidth:430,margin:"0 auto",color:T.text,overflowX:"hidden"};
+  const save=()=>setAreas(avs);
+  return(
+    <div style={S}>
+      <div style={{display:"flex",alignItems:"center",gap:10,padding:"14px 16px",borderBottom:`1px solid ${T.border}`,position:"sticky",top:0,background:T.bg,zIndex:10}}>
+        <button onClick={()=>{save();onBack();}} style={{background:T.card2,border:`1px solid ${T.border}`,color:T.text,width:34,height:34,borderRadius:"50%",cursor:"pointer",fontSize:".9rem"}}>←</button>
+        <div style={{fontSize:"1rem",fontWeight:900,color:T.text}}>📍 Serving Areas</div>
+      </div>
+      <div style={{padding:"12px 14px"}}>
+        <div style={{fontSize:".7rem",color:T.muted2,marginBottom:12}}>These areas appear on the home screen and enquiry form.</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16}}>
+          {avs.map((a,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:5,background:T.card,border:`1px solid ${T.border}`,borderRadius:50,padding:"6px 12px 6px 14px"}}>
+              <span style={{fontSize:".78rem",fontWeight:600,color:T.text}}>{a}</span>
+              <button onClick={()=>setAvs(avs.filter((_,j)=>j!==i))} style={{background:"none",border:"none",color:G.red,cursor:"pointer",fontSize:".8rem",padding:0,lineHeight:1}}>✕</button>
+            </div>
+          ))}
+        </div>
+        <div style={{display:"flex",gap:8,marginBottom:14}}>
+          <input value={newArea} onChange={e=>setNewArea(e.target.value)} placeholder="Add area e.g. Dwarka" onKeyDown={e=>{if(e.key==="Enter"&&newArea.trim()){setAvs([...avs,newArea.trim()]);setNewArea("");}}} style={{flex:1,padding:"10px 13px",border:`1px solid ${T.border}`,borderRadius:11,fontFamily:"'Poppins',sans-serif",fontSize:".84rem",color:T.text,background:T.card2,outline:"none"}}/>
+          <button onClick={()=>{if(newArea.trim()){setAvs([...avs,newArea.trim()]);setNewArea("");}}} style={{padding:"10px 16px",background:`${acc}22`,color:acc,border:`1px solid ${acc}44`,borderRadius:11,fontSize:".8rem",fontWeight:700,cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>+ Add</button>
+        </div>
+        <button onClick={()=>{save();onBack();}} style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",fontWeight:900,cursor:"pointer"}}>Save Areas ✓</button>
+      </div>
+    </div>
+  );
+}
+
+
+function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,combos,setCombos,offers,setOffers,reviews,setReviews,areas,setAreas}){
   const [sec,setSec]         = useState(null);
   const [editItem,setEditItem]= useState(null);
   const [addingTo,setAddingTo]= useState(null);
@@ -827,8 +948,7 @@ function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,c
         <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
           {OCCASIONS.map(o=>{
             const checked=selected.includes(o.id);
-            return(
-              <div key={o.id} onClick={()=>{const n=checked?selected.filter(x=>x!==o.id):[...selected,o.id];onChange(n);}}
+            return(              <div key={o.id} onClick={()=>{const n=checked?selected.filter(x=>x!==o.id):[...selected,o.id];onChange(n);}}
                 style={{padding:"5px 10px",borderRadius:50,border:`1.5px solid ${checked?acc:T.border}`,background:checked?`${acc}22`:"transparent",cursor:"pointer",fontSize:".66rem",fontWeight:checked?700:500,color:checked?acc:T.muted,transition:"all .15s"}}>
                 {o.emoji} {o.label}
               </div>
@@ -1090,82 +1210,8 @@ function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,c
   );
 
   // ── REVIEWS ─────────────────────────────────────────────────────────────────
-  if(sec==="reviews"){
-    const ReviewsSection = () => {
-      const [rvs,setRvs] = useState([...reviews]);
-      const cols=["#FF6B6B","#4FC3F7","#C9A84C","#CE93D8","#22C55E","#FFB74D","#F0B429","#3B82F6"];
-      return(
-        <div style={{fontFamily:"'Poppins',sans-serif",background:T.bg,minHeight:"100vh",maxWidth:430,margin:"0 auto",color:T.text}}>
-          <Toast/><AdminSHdr T={T} onBack={()=>setSec(null)} title="Customer Reviews" icon="⭐"/>
-          <div style={{padding:"12px 14px"}}>
-            {rvs.map((r,i)=>(
-              <div key={r.id||i} style={{background:T.card,borderRadius:16,padding:"13px",marginBottom:10,border:`1px solid ${T.border}`,position:"relative"}}>
-                <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,${r.col},transparent)`,borderRadius:"16px 16px 0 0"}}/>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
-                  <div>
-                    <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:3,textTransform:"uppercase"}}>Name</div>
-                    <input value={r.name} onChange={e=>{const n=[...rvs];n[i]={...n[i],name:e.target.value};setRvs(n);}} style={{width:"100%",padding:"7px 9px",border:`1px solid ${T.border}`,borderRadius:8,fontFamily:"'Poppins',sans-serif",fontSize:".78rem",color:T.text,background:T.card2,outline:"none"}}/>
-                  </div>
-                  <div>
-                    <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:3,textTransform:"uppercase"}}>Location</div>
-                    <input value={r.loc} onChange={e=>{const n=[...rvs];n[i]={...n[i],loc:e.target.value};setRvs(n);}} style={{width:"100%",padding:"7px 9px",border:`1px solid ${T.border}`,borderRadius:8,fontFamily:"'Poppins',sans-serif",fontSize:".78rem",color:T.text,background:T.card2,outline:"none"}}/>
-                  </div>
-                </div>
-                <div style={{marginBottom:7}}>
-                  <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:3,textTransform:"uppercase"}}>Review</div>
-                  <textarea value={r.text} onChange={e=>{const n=[...rvs];n[i]={...n[i],text:e.target.value};setRvs(n);}} rows={2} style={{width:"100%",padding:"7px 9px",border:`1px solid ${T.border}`,borderRadius:8,fontFamily:"'Poppins',sans-serif",fontSize:".78rem",color:T.text,background:T.card2,outline:"none",resize:"none"}}/>
-                </div>
-                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                  <div style={{display:"flex",gap:5}}>
-                    {cols.map(c=><div key={c} onClick={()=>{const n=[...rvs];n[i]={...n[i],col:c};setRvs(n);}} style={{width:18,height:18,borderRadius:"50%",background:c,cursor:"pointer",border:`2px solid ${r.col===c?"#fff":"transparent"}`,transition:"all .15s"}}/>)}
-                  </div>
-                  <button onClick={()=>setRvs(rvs.filter((_,j)=>j!==i))} style={{background:`${G.red}18`,color:G.red,border:`1px solid ${G.red}33`,padding:"3px 10px",borderRadius:50,fontSize:".62rem",cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Remove</button>
-                </div>
-              </div>
-            ))}
-            <button onClick={()=>setRvs([...rvs,{id:"rv"+Date.now(),name:"Customer",loc:"Delhi",stars:5,text:"Great food!",av:"C",col:"#F0B429"}])} style={{width:"100%",padding:"10px",background:T.card2,color:acc,border:`1px solid ${acc}44`,borderRadius:50,fontSize:".78rem",fontWeight:700,cursor:"pointer",fontFamily:"'Poppins',sans-serif",marginBottom:10}}>+ Add Review</button>
-            <button onClick={()=>{setReviews(rvs.map(r=>({...r,av:r.name[0]||"?"})));show("✅ Reviews saved!");}} style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",fontWeight:900,cursor:"pointer"}}>Save Reviews ✓</button>
-          </div>
-        </div>
-      );
-    };
-    return <ReviewsSection/>;
-  }
-
-  // ── AREAS ─────────────────────────────────────────────────────────────────────
-  if(sec==="areas"){
-    const AreasSection = () => {
-      const [avs,setAvs] = useState([...areas]);
-      const [newArea,setNewArea] = useState("");
-      return(
-        <div style={{fontFamily:"'Poppins',sans-serif",background:T.bg,minHeight:"100vh",maxWidth:430,margin:"0 auto",color:T.text}}>
-          <Toast/><AdminSHdr T={T} onBack={()=>setSec(null)} title="Serving Areas" icon="📍"/>
-          <div style={{padding:"12px 14px"}}>
-            <div style={{background:T.card2,borderRadius:12,padding:"10px 13px",marginBottom:13,border:`1px solid ${T.border}`,fontSize:".7rem",color:T.muted2,lineHeight:1.55}}>
-              Add or remove areas you serve. These appear on the home screen and in order forms.
-            </div>
-            <div style={{display:"flex",flexWrap:"wrap",gap:7,marginBottom:14}}>
-              {avs.map((a,i)=>(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:5,background:T.card,border:`1px solid ${T.border}`,borderRadius:50,padding:"5px 7px 5px 12px",fontSize:".74rem",fontWeight:600,color:T.text}}>
-                  {a}
-                  <button onClick={()=>setAvs(avs.filter((_,j)=>j!==i))} style={{background:`${G.red}22`,border:`1px solid ${G.red}33`,color:G.red,width:18,height:18,borderRadius:"50%",cursor:"pointer",fontSize:".6rem",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>✕</button>
-                </div>
-              ))}
-            </div>
-            <div style={{display:"flex",gap:8,marginBottom:14}}>
-              <input value={newArea} onChange={e=>setNewArea(e.target.value)} placeholder="e.g. Rohini" onKeyDown={e=>{if(e.key==="Enter"&&newArea.trim()){setAvs([...avs,newArea.trim()]);setNewArea("");}}}
-                style={{flex:1,padding:"9px 12px",border:`1px solid ${T.border}`,borderRadius:10,fontFamily:"'Poppins',sans-serif",fontSize:".82rem",color:T.text,background:T.card2,outline:"none"}}/>
-              <button onClick={()=>{if(newArea.trim()){setAvs([...avs,newArea.trim()]);setNewArea("");}}} style={{padding:"9px 16px",background:`${acc}22`,color:acc,border:`1px solid ${acc}44`,borderRadius:10,fontFamily:"'Poppins',sans-serif",fontSize:".78rem",fontWeight:700,cursor:"pointer"}}>+ Add</button>
-            </div>
-            <button onClick={()=>{setAreas(avs);show("✅ Areas saved!");}} style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",fontWeight:900,cursor:"pointer"}}>Save Areas ✓</button>
-          </div>
-        </div>
-      );
-    };
-    return <AreasSection/>;
-  }
-
-  // ── PAGES ─────────────────────────────────────────────────────────────────────
+  if(sec==="reviews") return <ReviewsSection reviews={reviews} setReviews={setReviews} T={T} acc={acc} G={G} onBack={()=>setSec(null)}/>;
+  if(sec==="areas") return <AreasSection areas={areas} setAreas={setAreas} T={T} acc={acc} G={G} onBack={()=>setSec(null)}/>;
   if(sec==="pages") return(
     <div style={S}>
       <AdminSHdr T={T} onBack={()=>setSec(null)} title="Pages" icon="📄"/>
@@ -1317,7 +1363,7 @@ export default function App(){
   if(adminOpen && adminAuth) return(
     <>
       <style>{css}</style>
-      <AdminPanel onExit={()=>{setAdminOpen(false);setAdminAuth(false);setAdminPw("");}} orders={orders} setOrders={setOrders} settings={settings} setSettings={setSettings} food={food} setFood={setFood} combos={combos} setCombos={setCombos} offers={offers} setOffers={setOffers}/>
+      <AdminPanel onExit={()=>{setAdminOpen(false);setAdminAuth(false);setAdminPw("");}} orders={orders} setOrders={setOrders} settings={settings} setSettings={setSettings} food={food} setFood={setFood} combos={combos} setCombos={setCombos} offers={offers} setOffers={setOffers} reviews={reviews} setReviews={setReviews} areas={areas} setAreas={setAreas}/>
     </>
   );
 
@@ -1377,8 +1423,7 @@ export default function App(){
           <div style={{margin:"0 14px 12px"}}>
             <div style={{background:T.card2,borderRadius:14,padding:"10px 14px",border:`1px solid ${chefBoxSel.length===5?acc+"55":T.border}`}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                <div style={{fontSize:".72rem",fontWeight:800,color:chefBoxSel.length===5?acc:T.text}}>{chefBoxSel.length}/5 items selected {chefBoxSel.length===5?"✓":""}</div>
-                <div style={{fontSize:".68rem",color:T.muted}}>Exactly 5 required</div>
+                <div style={{fontSize:".72rem",fontWeight:800,color:chefBoxSel.length===5?acc:T.text}}>{chefBoxSel.length}/5 items selected {chefBoxSel.length===5?"✓":""}</div>                <div style={{fontSize:".68rem",color:T.muted}}>Exactly 5 required</div>
               </div>
               <div style={{display:"flex",gap:6}}>
                 {Array.from({length:5},(_,i)=>(
@@ -1606,7 +1651,10 @@ export default function App(){
               <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,textAlign:"center"}}>
                 <div><div style={{fontSize:"1.2rem"}}>{occasion?.emoji||entry?.emoji||"🎉"}</div><div style={{fontSize:".68rem",fontWeight:700,marginTop:3,color:T.text}}>{occasion?.label||entry?.label||"General"}</div><div style={{fontSize:".56rem",color:T.muted}}>Occasion</div></div>
                 <div><div style={{fontSize:".63rem",color:T.muted,marginTop:4}}>📅 {date}</div><div style={{fontSize:".63rem",color:T.muted,marginTop:4}}>👥 {pax} guests</div><div style={{fontSize:".63rem",color:T.muted,marginTop:4}}>🥗 {diet}</div></div>
-                <div><div style={{fontSize:".7rem",fontWeight:700,color:acc,marginTop:4}}>{entry?.label}</div></div>
+                <div>
+                <div style={{fontSize:".7rem",fontWeight:700,color:acc,marginTop:4}}>{entry?.label}</div>
+                {(()=>{const p=calcPrice(sel,pax);return(<><div style={{fontSize:"1rem",fontWeight:900,color:acc,marginTop:4}}>₹{p.total.toLocaleString()}</div><div style={{fontSize:".58rem",color:T.muted}}>₹{p.ppRate}/pp · {pax} guests</div><div style={{fontSize:".58rem",color:T.muted2}}>{p.tier} pkg</div></>);})()}
+              </div>
               </div>
             </div>
             {[["🍢","starters","Starters"],["🍛","mains","Mains"],["🫓","breads","Breads"],["🍚","rice","Rice"],["🍮","desserts","Desserts"],["🫙","condiments","Condiments"]].map(([ic,key,lb])=>(
@@ -1776,26 +1824,38 @@ export default function App(){
 
         {section==="about"&&<>
           <div style={{padding:"0 16px 11px"}}><div style={{fontSize:".54rem",color:T.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:2}}>Our Story</div><div style={{fontSize:"1.2rem",fontWeight:900,color:T.text}}>About <span style={{color:acc}}>Us</span></div></div>
-          <div style={{margin:"0 12px 12px",borderRadius:20,overflow:"hidden",height:190,position:"relative"}}>
-            <img src={settings.heroImg||"https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=90"} alt="Kitchen" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-            <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(7,7,7,.08) 0%,rgba(7,7,7,.65) 100%)"}}/>
-            <div style={{position:"absolute",bottom:13,left:13,display:"flex",alignItems:"center",gap:9}}>
-              {settings.founderImg
-                ?<div style={{width:44,height:44,borderRadius:"50%",overflow:"hidden",border:`2px solid ${acc}55`,flexShrink:0}}><img src={settings.founderImg} alt="Founder" style={{width:"100%",height:"100%",objectFit:"cover"}}/></div>
-                :<Logo size={40} accent={acc}/>}
-              <div>
-                <div style={{fontSize:".92rem",fontWeight:900,color:"#fff"}}>{settings.founderName||"Mrs Chef"}</div>
-                <div style={{fontSize:".6rem",color:"rgba(255,255,255,.55)"}}>{settings.founderNote||"Founder · Delhi NCR"}</div>
+
+          {/* Article-style: small founder image left, info right */}
+          <div style={{margin:"0 12px 12px",background:T.card,borderRadius:18,padding:"14px",border:`1px solid ${T.border}`,display:"flex",gap:13,alignItems:"flex-start"}}>
+            <div style={{flexShrink:0,width:80,height:80,borderRadius:16,overflow:"hidden",border:`2px solid ${acc}44`,background:T.card2}}>
+              <img src={settings.founderImg||"https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=300&q=85"} alt="Founder" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:".92rem",fontWeight:900,color:T.text,lineHeight:1.2,marginBottom:3}}>{settings.founderName||"Chef Sunita"}</div>
+              <div style={{fontSize:".65rem",color:acc,fontWeight:600,marginBottom:6}}>{settings.founderNote||"Founder & Head Chef · Delhi NCR"}</div>
+              <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+                {[["⭐",settings.eventsCount||"100+","Events"],["🏠","Home","Kitchen"],["📍","Delhi","NCR"]].map(([ic,v,l])=>(
+                  <div key={l} style={{background:T.card2,borderRadius:8,padding:"3px 8px",textAlign:"center"}}>
+                    <div style={{fontSize:".62rem",fontWeight:700,color:T.text}}>{ic} {v}</div>
+                    <div style={{fontSize:".52rem",color:T.muted}}>{l}</div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
+
+          {/* About text */}
           <div style={{margin:"0 12px 11px",background:T.card,borderRadius:16,padding:"14px",border:`1px solid ${T.border}`}}>
             <div style={{fontSize:".8rem",color:T.muted2,lineHeight:1.75}}>{settings.about}</div>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:7,margin:"0 12px 11px"}}>
-            {[[settings.eventsCount||"100+","Events"],["4.9★","Rating"],["5yrs","Exp."]].map(([v,l])=>(
-              <div key={l} style={{background:T.card,borderRadius:12,padding:"12px 8px",textAlign:"center",border:`1px solid ${T.border}`}}>
-                <div style={{fontSize:"1.05rem",fontWeight:900,color:acc}}>{v}</div><div style={{fontSize:".57rem",color:T.muted,marginTop:2}}>{l}</div>
+
+          {/* Values grid */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7,margin:"0 12px"}}>
+            {[["🥗","Fresh Daily","Local sourced"],["🏠","Home Style","Family recipes"],["📦","Hygienic","Packed safely"],["⭐","Consistent","Every event"]].map(([ic,h,d])=>(
+              <div key={h} style={{background:T.card,borderRadius:12,padding:"11px",border:`1px solid ${T.border}`}}>
+                <div style={{fontSize:"1.15rem",marginBottom:5}}>{ic}</div>
+                <div style={{fontSize:".72rem",fontWeight:700,marginBottom:2,color:T.text}}>{h}</div>
+                <div style={{fontSize:".58rem",color:T.muted,lineHeight:1.4}}>{d}</div>
               </div>
             ))}
           </div>
@@ -1834,6 +1894,7 @@ export default function App(){
             </div>
           )}
         </>}
+
         <BottomNav/>
       </div>
     </div>
