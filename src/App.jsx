@@ -485,6 +485,7 @@ function ImageUploader({label, currentImg, onUpload, T, acc, G, size="medium"}){
   const handleFile = async (e) => {
     const file = e.target.files?.[0];
     if(!file) return;
+    if(file.size > 5*1024*1024){ setMsg("❌ File too large — max 5MB"); setUploading(false); return; }
     setUploading(true);
     setMsg("Loading photo...");
     try {
@@ -505,7 +506,6 @@ function ImageUploader({label, currentImg, onUpload, T, acc, G, size="medium"}){
       formData.append("file", file);
       formData.append("upload_preset", "mrschef_unsigned");
       formData.append("cloud_name", "mrschef");
-
       try {
         const res  = await fetch(
           "https://api.cloudinary.com/v1_1/mrschef/image/upload",
@@ -724,6 +724,175 @@ function BusinessForm({settings, setSettings, T, acc, G, show, onBack}){
           Tap Save after making all changes
         </div>
       </div>
+    </div>
+  );
+}
+
+
+// ── REVIEWS SECTION ─────────────────────────────────────────────────────
+function ReviewsSection({reviews,setReviews,T,acc,G,onBack}){
+  const [rvs,setRvs] = useState([...reviews]);
+  const cols=["#FF6B6B","#4FC3F7","#C9A84C","#CE93D8","#22C55E","#FFB74D","#F0B429","#3B82F6"];
+  const IS={width:"100%",padding:"9px 11px",border:`1px solid ${T.border}`,borderRadius:10,
+    fontFamily:"'Poppins',sans-serif",fontSize:".8rem",color:T.text,background:T.card2,outline:"none"};
+  return(
+    <div style={{fontFamily:"'Poppins',sans-serif",background:T.bg,minHeight:"100vh",
+      maxWidth:430,margin:"0 auto",color:T.text,overflowX:"hidden"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,padding:"14px 16px",
+        borderBottom:`1px solid ${T.border}`,position:"sticky",top:0,background:T.bg,zIndex:10}}>
+        <button onClick={()=>{setReviews(rvs);onBack();}}
+          style={{background:T.card2,border:`1px solid ${T.border}`,color:T.text,
+            width:34,height:34,borderRadius:"50%",cursor:"pointer",fontSize:".9rem"}}>←</button>
+        <div style={{fontSize:"1rem",fontWeight:900,color:T.text}}>⭐ Customer Reviews</div>
+      </div>
+      <div style={{padding:"12px 14px"}}>
+        <div style={{fontSize:".7rem",color:T.muted2,marginBottom:12}}>
+          Edit reviews shown on the Reviews page. Changes save when you tap ←</div>
+        {rvs.map((r,i)=>(
+          <div key={i} style={{background:T.card,borderRadius:16,padding:"13px",
+            marginBottom:10,border:`1px solid ${T.border}`}}>
+            <div style={{display:"flex",gap:7,marginBottom:8,flexWrap:"wrap"}}>
+              <div style={{flex:1}}>
+                <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:3,textTransform:"uppercase"}}>Name</div>
+                <input value={r.name}
+                  onChange={e=>{const n=[...rvs];n[i]={...n[i],name:e.target.value};setRvs(n);}}
+                  style={{...IS,width:"100%"}}/>
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:3,textTransform:"uppercase"}}>Location</div>
+                <input value={r.loc}
+                  onChange={e=>{const n=[...rvs];n[i]={...n[i],loc:e.target.value};setRvs(n);}}
+                  style={{...IS,width:"100%"}}/>
+              </div>
+            </div>
+            <div style={{marginBottom:8}}>
+              <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:3,textTransform:"uppercase"}}>Review</div>
+              <textarea value={r.text} rows={2}
+                onChange={e=>{const n=[...rvs];n[i]={...n[i],text:e.target.value};setRvs(n);}}
+                style={{...IS,resize:"none",width:"100%"}}/>
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{display:"flex",gap:3}}>
+                {[1,2,3,4,5].map(s=>(
+                  <span key={s} onClick={()=>{const n=[...rvs];n[i]={...n[i],stars:s};setRvs(n);}}
+                    style={{fontSize:"1.1rem",cursor:"pointer",opacity:s<=r.stars?1:.25}}>⭐</span>
+                ))}
+              </div>
+              <div style={{display:"flex",gap:5}}>
+                <div style={{display:"flex",gap:4}}>
+                  {cols.map(c=>(
+                    <div key={c} onClick={()=>{const n=[...rvs];n[i]={...n[i],col:c};setRvs(n);}}
+                      style={{width:13,height:13,borderRadius:"50%",background:c,cursor:"pointer",
+                        border:`2px solid ${r.col===c?"#fff":"transparent"}`}}/>
+                  ))}
+                </div>
+                <button onClick={()=>setRvs(rvs.filter((_,j)=>j!==i))}
+                  style={{background:`${G.red}18`,color:G.red,border:`1px solid ${G.red}33`,
+                    padding:"3px 10px",borderRadius:50,fontSize:".62rem",cursor:"pointer",
+                    fontFamily:"'Poppins',sans-serif"}}>Remove</button>
+              </div>
+            </div>
+          </div>
+        ))}
+        <button onClick={()=>setRvs([...rvs,{name:"New Customer",loc:"Delhi",stars:5,
+          text:"Amazing food!",av:"N",col:cols[rvs.length%cols.length]}])}
+          style={{width:"100%",padding:"11px",background:T.card2,color:acc,
+            border:`1px solid ${acc}44`,borderRadius:50,fontSize:".8rem",fontWeight:700,
+            cursor:"pointer",fontFamily:"'Poppins',sans-serif",marginBottom:10}}>+ Add Review</button>
+        <button onClick={()=>{setReviews(rvs);onBack();}}
+          style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,
+            color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",
+            fontSize:".86rem",fontWeight:900,cursor:"pointer"}}>Save Reviews ✓</button>
+      </div>
+    </div>
+  );
+}
+
+// ── AREAS SECTION ────────────────────────────────────────────────────────
+function AreasSection({areas,setAreas,T,acc,G,onBack}){
+  const [avs,setAvs] = useState([...areas]);
+  const [newA,setNewA] = useState("");
+  return(
+    <div style={{fontFamily:"'Poppins',sans-serif",background:T.bg,minHeight:"100vh",
+      maxWidth:430,margin:"0 auto",color:T.text,overflowX:"hidden"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,padding:"14px 16px",
+        borderBottom:`1px solid ${T.border}`,position:"sticky",top:0,background:T.bg,zIndex:10}}>
+        <button onClick={()=>{setAreas(avs);onBack();}}
+          style={{background:T.card2,border:`1px solid ${T.border}`,color:T.text,
+            width:34,height:34,borderRadius:"50%",cursor:"pointer",fontSize:".9rem"}}>←</button>
+        <div style={{fontSize:"1rem",fontWeight:900,color:T.text}}>📍 Serving Areas</div>
+      </div>
+      <div style={{padding:"12px 14px"}}>
+        <div style={{fontSize:".7rem",color:T.muted2,marginBottom:12}}>
+          These areas appear on the home screen and enquiry form.</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16}}>
+          {avs.map((a,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:5,background:T.card,
+              border:`1px solid ${T.border}`,borderRadius:50,padding:"6px 12px 6px 14px"}}>
+              <span style={{fontSize:".78rem",fontWeight:600,color:T.text}}>{a}</span>
+              <button onClick={()=>setAvs(avs.filter((_,j)=>j!==i))}
+                style={{background:"none",border:"none",color:G.red,cursor:"pointer",
+                  fontSize:".8rem",padding:0,lineHeight:1,marginLeft:2}}>✕</button>
+            </div>
+          ))}
+        </div>
+        <div style={{display:"flex",gap:8,marginBottom:14}}>
+          <input value={newA} onChange={e=>setNewA(e.target.value)}
+            placeholder="Add area e.g. Noida"
+            onKeyDown={e=>{if(e.key==="Enter"&&newA.trim()){setAvs([...avs,newA.trim()]);setNewA("");}}}
+            style={{flex:1,padding:"10px 13px",border:`1px solid ${T.border}`,borderRadius:11,
+              fontFamily:"'Poppins',sans-serif",fontSize:".84rem",color:T.text,
+              background:T.card2,outline:"none"}}/>
+          <button onClick={()=>{if(newA.trim()){setAvs([...avs,newA.trim()]);setNewA("");}}}
+            style={{padding:"10px 16px",background:`${acc}22`,color:acc,
+              border:`1px solid ${acc}44`,borderRadius:11,fontSize:".8rem",fontWeight:700,
+              cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>+ Add</button>
+        </div>
+        <button onClick={()=>{setAreas(avs);onBack();}}
+          style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,
+            color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",
+            fontSize:".86rem",fontWeight:900,cursor:"pointer"}}>Save Areas ✓</button>
+      </div>
+    </div>
+  );
+}
+
+
+// ── SHARED ADMIN UI HELPERS (top-level — never remount) ──────────────────
+function AdminInp({label,value,onChange,type="text",ph="",T}){
+  return(
+    <div style={{marginBottom:12}}>
+      <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:5,
+        textTransform:"uppercase",letterSpacing:".05em"}}>{label}</div>
+      <input type={type} value={value} onChange={e=>onChange(e.target.value)}
+        placeholder={ph}
+        style={{width:"100%",padding:"11px 13px",border:`1px solid ${T.border}`,
+          borderRadius:11,fontFamily:"'Poppins',sans-serif",fontSize:".84rem",
+          color:T.text,background:T.card2,outline:"none"}}/>
+    </div>
+  );
+}
+function AdminTog({on,onChange,label,T,acc}){
+  return(
+    <div onClick={()=>onChange(!on)}
+      style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+        cursor:"pointer",padding:"11px 0",borderTop:`1px solid ${T.border}`}}>
+      <span style={{fontSize:".8rem",color:T.text,fontFamily:"'Poppins',sans-serif"}}>{label}</span>
+      <div style={{width:44,height:24,borderRadius:50,background:on?acc:T.card3,
+        position:"relative",transition:"background .2s",flexShrink:0}}>
+        <div style={{position:"absolute",top:3,left:on?23:3,width:18,height:18,
+          borderRadius:"50%",background:"#fff",transition:"left .2s"}}/>
+      </div>
+    </div>
+  );
+}
+function AdminSHdr({title,icon,onBack,T}){
+  return(
+    <div style={{display:"flex",alignItems:"center",gap:10,padding:"14px 16px",
+      borderBottom:`1px solid ${T.border}`,position:"sticky",top:0,background:T.bg,zIndex:10}}>
+      <button onClick={onBack} style={{background:T.card2,border:`1px solid ${T.border}`,
+        color:T.text,width:34,height:34,borderRadius:"50%",cursor:"pointer",fontSize:".9rem"}}>←</button>
+      <div style={{fontSize:"1rem",fontWeight:900,color:T.text}}>{icon} {title}</div>
     </div>
   );
 }
@@ -1230,9 +1399,50 @@ export default function App(){
       tier = "Custom";
     }
 
-    const total = ppRate * (paxCount || 1);
+    const total = (ppRate||0) * (paxCount||1);
     return { ppRate, tier, total };
   };
+  // ── Hero image rotation ─────────────────────────────────────────────
+  useEffect(()=>{
+    const t=setInterval(()=>setHeroIdx(i=>(i+1)%HERO_IMGS.length),3500);
+    return()=>clearInterval(t);
+  },[]);
+
+  // ── Satvik lock ──────────────────────────────────────────────────────
+  useEffect(()=>{if(occasion?.vegOnly) setDiet("veg");},[occasion]);
+
+  // ── WhatsApp send from confirm screen ────────────────────────────────
+  const sendWA=()=>{
+    const num=(settings.whatsapp||"").replace(/\D/g,"")||"918700642925";
+    const starters = sel.starters.map(i=>i.name).join(", ")||"None";
+    const mains    = sel.mains.map(i=>i.name).join(", ")||"None";
+    const breads   = sel.breads.map(i=>i.name).join(", ")||"None";
+    const rice     = sel.rice.map(i=>i.name).join(", ")||"None";
+    const desserts = sel.desserts.map(i=>i.name).join(", ")||"None";
+    const p        = calcPrice(sel,pax);
+    const msg=encodeURIComponent(
+      `Hi Mrs Chef! 🍽️\n\n`+
+      `👤 ${form.name}\n📞 ${form.phone}\n`+
+      `📅 ${date}\n🎉 ${occasion?.label||entry?.label}\n`+
+      `👥 ${pax} guests · 🥗 ${diet}\n📍 ${form.area}\n\n`+
+      `🍢 Starters: ${starters}\n`+
+      `🍛 Mains: ${mains}\n`+
+      `🫓 Breads: ${breads}\n`+
+      `🍚 Rice: ${rice}\n`+
+      `🍮 Desserts: ${desserts}\n\n`+
+      `💰 ₹${p.ppRate}/pp × ${pax} = ₹${p.total.toLocaleString()}\n`+
+      `📦 Package: ${p.tier}\n\n`+
+      `📝 Notes: ${form.notes||"None"}`
+    );
+    setOrders(p=>[{id:Date.now(),name:form.name,phone:form.phone,
+      date,occasion:occasion?.label,pax,diet,sel,area:form.area,
+      pricePerPerson:p.ppRate,status:"New",source:"Site",
+      time:new Date().toLocaleTimeString()},...p]);
+    window.open(`https://wa.me/${num}?text=${msg}`,"_blank");
+    setSent(true);
+  };
+
+
   const css=`
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
     *{box-sizing:border-box;margin:0;padding:0}body{background:${T.bg}}
@@ -1269,6 +1479,26 @@ export default function App(){
       <AdminPanel onExit={()=>{setAdminOpen(false);setAdminAuth(false);setAdminPw("");}} orders={orders} setOrders={setOrders} settings={settings} setSettings={setSettings} food={food} setFood={setFood} combos={combos} setCombos={setCombos} offers={offers} setOffers={setOffers} reviews={reviews} setReviews={setReviews} areas={areas} setAreas={setAreas}/>
     </>
   );
+
+
+  // ── Occasion + diet filter for menu builder ─────────────────────────
+  const filterFood = (items) => {
+    let out = items.filter(i => i.active !== false);
+    // Diet filter
+    if(diet === "veg" || diet === "satvik"){
+      out = out.filter(i => i.veg);
+    } else if(diet === "nonveg"){
+      out = out.filter(i => !i.veg);
+    }
+    // Occasion filter
+    if(occasion){
+      out = out.filter(i => {
+        const occ = i.occasions || [];
+        return occ.length === 0 || occ.includes(occasion?.id);
+      });
+    }
+    return out;
+  };
 
   const Header=({back,title})=>(
     <div style={{display:"flex",alignItems:"center",gap:10,padding:"16px 16px 10px"}}>
@@ -1495,7 +1725,7 @@ export default function App(){
               <div style={{padding:"0 14px 5px",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                 <div>
                   <div style={{fontSize:".62rem",color:T.muted}}>{curSel.length>0?`${curSel.length} selected`:"Tap a dish to add"}</div>
-                  {occasion&&<div style={{fontSize:".57rem",color:acc,marginTop:1}}>🎯 Filtered for {occasion.label}</div>}
+                  {occasion&&<div style={{fontSize:".57rem",color:acc,marginTop:1}}>🎯 Filtered for {occasion?.label}</div>}
                 </div>
                 {(cur.key!=="mains")&&<button onClick={()=>setStep(s=>Math.min(BUILDER_STEPS.length-1,s+1))} style={{background:"transparent",border:`1px solid ${T.border}`,color:T.muted,padding:"4px 10px",borderRadius:50,fontSize:".6rem",cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Skip →</button>}
               </div>
@@ -1792,7 +2022,7 @@ export default function App(){
                   <div><label style={{display:"block",fontSize:".58rem",fontWeight:700,color:T.muted,marginBottom:3,textTransform:"uppercase"}}>Date</label><input type="date" value={enquiry.date} onChange={e=>setEnquiry({...enquiry,date:e.target.value})} style={{width:"100%",padding:"9px 11px",border:`1px solid ${T.border}`,borderRadius:10,fontFamily:"'Poppins',sans-serif",fontSize:".8rem",color:T.text,background:T.card2,outline:"none"}}/></div>
                 </div>
                 <div style={{marginBottom:12}}><label style={{display:"block",fontSize:".58rem",fontWeight:700,color:T.muted,marginBottom:3,textTransform:"uppercase"}}>Message</label><textarea value={enquiry.notes} onChange={e=>setEnquiry({...enquiry,notes:e.target.value})} placeholder="Tell us about your event…" rows={3} style={{width:"100%",padding:"9px 11px",border:`1px solid ${T.border}`,borderRadius:10,fontFamily:"'Poppins',sans-serif",fontSize:".8rem",color:T.text,background:T.card2,outline:"none",resize:"none"}}/></div>
-                <button onClick={()=>{if(enquiry.name&&enquiry.phone){const num=settings.whatsapp.replace(/\D/g,"");const msg=encodeURIComponent(`Hi Mrs Chef!\n👤 ${enquiry.name}\n📞 ${enquiry.phone}\n🎉 ${enquiry.occasion}\n👥 ${enquiry.guests} guests\n📅 ${enquiry.date}\n📝 ${enquiry.notes||"None"}`);window.open(`https://wa.me/${num}?text=${msg}`,"_blank");setEnquirySent(true);}}} style={{width:"100%",padding:"12px",background:enquiry.name&&enquiry.phone?`linear-gradient(135deg,${acc},${G.goldd})`:"#1A1A1A",color:enquiry.name&&enquiry.phone?"#000":T.muted,border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".84rem",fontWeight:900,cursor:"pointer",transition:"all .2s"}}>💬 Send via WhatsApp</button>
+                <button onClick={()=>{if(enquiry.name&&enquiry.phone){const num=(settings.whatsapp||"").replace(/\D/g,"")||"918700642925";const msg=encodeURIComponent(`Hi Mrs Chef!\n👤 ${enquiry.name}\n📞 ${enquiry.phone}\n🎉 ${enquiry.occasion}\n👥 ${enquiry.guests} guests\n📅 ${enquiry.date}\n📝 ${enquiry.notes||"None"}`);window.open(`https://wa.me/${num}?text=${msg}`,"_blank");setEnquirySent(true);}}} style={{width:"100%",padding:"12px",background:enquiry.name&&enquiry.phone?`linear-gradient(135deg,${acc},${G.goldd})`:"#1A1A1A",color:enquiry.name&&enquiry.phone?"#000":T.muted,border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".84rem",fontWeight:900,cursor:"pointer",transition:"all .2s"}}>💬 Send via WhatsApp</button>
               </div>
             </div>
           )}
