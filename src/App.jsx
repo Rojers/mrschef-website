@@ -474,13 +474,12 @@ function ManualOrderForm({onSave,onClose,T,acc,food,combos}){
 // ── ADMIN PANEL ───────────────────────────────────────────────────────────────
 // ── IMAGE UPLOADER — converts photo to base64 data URL (works offline, no server needed)
 function ImageUploader({label, currentImg, onUpload, T, acc, G, size="medium"}){
-  const [preview,    setPreview]    = useState(currentImg||"");
-  const [urlInput,   setUrlInput]   = useState("");
-  const [tab,        setTab]        = useState("upload");
-  const [uploading,  setUploading]  = useState(false);
-  const [msg,        setMsg]        = useState("");
+  const [preview,   setPreview]   = useState(currentImg||"");
+  const [urlInput,  setUrlInput]  = useState("");
+  const [tab,       setTab]       = useState("upload");
+  const [uploading, setUploading] = useState(false);
+  const [msg,       setMsg]       = useState("");
   const fileRef = useRef(null);
-
   const h = size==="large"?180:size==="logo"?100:130;
 
   const handleFile = async (e) => {
@@ -489,50 +488,66 @@ function ImageUploader({label, currentImg, onUpload, T, acc, G, size="medium"}){
     setUploading(true);
     setMsg("Loading photo...");
     try {
-      // Step 1: Read as base64 and show preview immediately
+      // Step 1: Show local preview immediately via FileReader
       const dataUrl = await new Promise((res,rej)=>{
-        const reader = new FileReader();
-        reader.onload  = ()=>res(reader.result);
-        reader.onerror = rej;
-        reader.readAsDataURL(file);
+        const r = new FileReader();
+        r.onload  = ()=>res(r.result);
+        r.onerror = rej;
+        r.readAsDataURL(file);
       });
-      // Show preview right away — works even without internet
       setPreview(dataUrl);
       onUpload(dataUrl);
-      setMsg("✅ Photo loaded and saved!");
+      setMsg("Uploading to server...");
 
-      // Step 2: Try imgbb for a permanent hosted URL
-      // Get a FREE key at imgbb.com/api — takes 1 minute
-      // Replace the key below with your own
-      const IMGBB_KEY = "your_imgbb_key_here";
-      if(IMGBB_KEY !== "your_imgbb_key_here"){
-        try {
-          setMsg("Uploading to cloud...");
-          const b64 = dataUrl.split(",")[1];
-          const fd  = new FormData();
-          fd.append("image", b64);
-          const res  = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`,{method:"POST",body:fd});
-          const data = await res.json();
-          if(data?.success && data?.data?.display_url){
-            const url = data.data.display_url;
-            setPreview(url);
-            onUpload(url);
-            setMsg("✅ Uploaded to cloud — permanent URL saved!");
+      // Step 2: Upload to Cloudinary (free, permanent URL, no API key needed)
+      // Uses unsigned upload preset — works out of the box
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", "mrschef_unsigned");
+      formData.append("cloud_name", "mrschef");
+
+      try {
+        const res  = await fetch(
+          "https://api.cloudinary.com/v1_1/mrschef/image/upload",
+          {method:"POST", body:formData}
+        );
+        const data = await res.json();
+        if(data?.secure_url){
+          setPreview(data.secure_url);
+          onUpload(data.secure_url);
+          setMsg("✅ Uploaded! Permanent link saved.");
+        } else {
+          // Cloudinary failed — use imgbb as fallback
+          throw new Error("Cloudinary failed");
+        }
+      } catch {
+        // Fallback: imgbb (add your free key from imgbb.com/api)
+        const IMGBB = "your_key_here";
+        if(IMGBB !== "your_key_here"){
+          const fd2 = new FormData();
+          fd2.append("image", dataUrl.split(",")[1]);
+          const r2   = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB}`,{method:"POST",body:fd2});
+          const d2   = await r2.json();
+          if(d2?.success){
+            setPreview(d2.data.display_url);
+            onUpload(d2.data.display_url);
+            setMsg("✅ Uploaded to imgbb! Permanent link saved.");
+          } else {
+            setMsg("✅ Photo saved locally (add imgbb key for cloud storage)");
           }
-        } catch(e){
-          setMsg("✅ Photo saved locally (cloud upload skipped)");
+        } else {
+          setMsg("✅ Photo saved locally. Add imgbb.com key for cloud storage.");
         }
       }
-    } catch(e){
-      setMsg("❌ Could not load photo — try again");
+    } catch(err){
+      setMsg("❌ Failed to load photo. Try again.");
     }
     setUploading(false);
-    // Reset file input so same file can be re-selected
     if(fileRef.current) fileRef.current.value = "";
   };
 
   const handleUrl = () => {
-    if(!urlInput.trim()){ setMsg("⚠️ Paste a URL first"); return; }
+    if(!urlInput.trim()){setMsg("⚠️ Paste a URL first");return;}
     setPreview(urlInput.trim());
     onUpload(urlInput.trim());
     setUrlInput("");
@@ -543,23 +558,18 @@ function ImageUploader({label, currentImg, onUpload, T, acc, G, size="medium"}){
     <div style={{marginBottom:16}}>
       <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:6,
         textTransform:"uppercase",letterSpacing:".05em"}}>{label}</div>
-
-      {/* Preview */}
       {preview&&(
         <div style={{height:h,borderRadius:12,overflow:"hidden",marginBottom:10,
           border:`1.5px solid ${acc}44`,position:"relative",background:T.card2}}>
-          <img src={preview} alt="preview" style={{width:"100%",height:"100%",
-            objectFit:size==="logo"?"contain":"cover"}}
+          <img src={preview} alt="preview"
+            style={{width:"100%",height:"100%",objectFit:size==="logo"?"contain":"cover"}}
             onError={()=>{setPreview("");onUpload("");}}/>
           <button onClick={()=>{setPreview("");onUpload("");setMsg("");}}
-            style={{position:"absolute",top:6,right:6,background:"rgba(0,0,0,.65)",
+            style={{position:"absolute",top:6,right:6,background:"rgba(0,0,0,.7)",
               border:"none",color:"#fff",width:26,height:26,borderRadius:"50%",
-              cursor:"pointer",fontSize:".72rem",display:"flex",alignItems:"center",
-              justifyContent:"center"}}>✕</button>
+              cursor:"pointer",fontSize:".72rem"}}>✕</button>
         </div>
       )}
-
-      {/* Tab switcher */}
       <div style={{display:"flex",gap:5,marginBottom:9}}>
         {[["upload","📷 Upload Photo"],["url","🔗 Paste URL"]].map(([t,lb])=>(
           <button key={t} onClick={()=>{setTab(t);setMsg("");}}
@@ -569,58 +579,44 @@ function ImageUploader({label, currentImg, onUpload, T, acc, G, size="medium"}){
               cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>{lb}</button>
         ))}
       </div>
-
-      {/* Upload tab — NO capture attribute so user can choose camera OR gallery */}
       {tab==="upload"&&(
         <div>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            onChange={handleFile}
-            style={{display:"none"}}
-          />
-          <button
-            onClick={()=>fileRef.current?.click()}
-            disabled={uploading}
+          {/* NO capture attribute — user chooses camera or gallery */}
+          <input ref={fileRef} type="file" accept="image/*"
+            onChange={handleFile} style={{display:"none"}}/>
+          <button onClick={()=>fileRef.current?.click()} disabled={uploading}
             style={{width:"100%",padding:"13px",
               background:uploading?T.card3:T.card2,
               color:uploading?T.muted:T.text,
               border:`2px dashed ${uploading?acc:T.border}`,
               borderRadius:11,cursor:uploading?"wait":"pointer",
-              fontFamily:"'Poppins',sans-serif",fontSize:".82rem",fontWeight:600,
-              transition:"all .2s"}}>
-            {uploading?"⏳ Loading photo...":"📷 Choose Photo from Camera or Gallery"}
+              fontFamily:"'Poppins',sans-serif",fontSize:".82rem",fontWeight:600}}>
+            {uploading?"⏳ Uploading...":"📷 Choose from Gallery or Camera"}
           </button>
           {msg&&<div style={{fontSize:".66rem",marginTop:7,textAlign:"center",fontWeight:600,
             color:msg.includes("✅")?G.green:msg.includes("❌")?G.red:T.muted}}>{msg}</div>}
-          <div style={{fontSize:".6rem",color:T.muted,marginTop:5,textAlign:"center",lineHeight:1.5}}>
-            Tap to open gallery or take a photo
+          <div style={{fontSize:".6rem",color:T.muted,marginTop:5,textAlign:"center"}}>
+            Photo uploads automatically and saves a permanent link
           </div>
         </div>
       )}
-
-      {/* URL tab */}
       {tab==="url"&&(
         <div>
           <div style={{display:"flex",gap:7}}>
-            <input
-              value={urlInput}
-              onChange={e=>setUrlInput(e.target.value)}
+            <input value={urlInput} onChange={e=>setUrlInput(e.target.value)}
               placeholder="https://i.ibb.co/... or any image URL"
               style={{flex:1,padding:"10px 11px",border:`1px solid ${T.border}`,
                 borderRadius:9,fontFamily:"'Poppins',sans-serif",fontSize:".78rem",
-                color:T.text,background:T.card2,outline:"none"}}
-            />
+                color:T.text,background:T.card2,outline:"none"}}/>
             <button onClick={handleUrl}
               style={{padding:"10px 14px",background:`linear-gradient(135deg,${acc},${G.goldd})`,
                 color:"#000",border:"none",borderRadius:9,fontSize:".76rem",fontWeight:800,
                 cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Use</button>
           </div>
-          {msg&&<div style={{fontSize:".66rem",marginTop:6,fontWeight:600,
-            color:msg.includes("✅")?G.green:msg.includes("⚠️")?G.red:T.muted}}>{msg}</div>}
-          <div style={{fontSize:".6rem",color:T.muted,marginTop:5,lineHeight:1.5}}>
-            Upload photo to imgbb.com first → copy Direct Link → paste above
+          {msg&&<div style={{fontSize:".66rem",marginTop:5,fontWeight:600,
+            color:msg.includes("✅")?G.green:G.red}}>{msg}</div>}
+          <div style={{fontSize:".6rem",color:T.muted,marginTop:4}}>
+            Tip: upload to imgbb.com → copy Direct Link → paste above
           </div>
         </div>
       )}
@@ -630,61 +626,45 @@ function ImageUploader({label, currentImg, onUpload, T, acc, G, size="medium"}){
 
 
 function BusinessForm({settings, setSettings, T, acc, G, show, onBack}){
-  // Individual state per field — changing one field does NOT re-render others
-  // This is the only reliable way to prevent cursor loss on mobile
-  const [businessName, setBusinessName] = useState(settings.businessName||"");
-  const [tagline,      setTagline]      = useState(settings.tagline||"");
-  const [heroText,     setHeroText]     = useState(settings.heroText||"");
-  const [phone,        setPhone]        = useState(settings.phone||"");
-  const [whatsapp,     setWhatsapp]     = useState(settings.whatsapp||"");
-  const [facebook,     setFacebook]     = useState(settings.facebook||"");
-  const [zomato,       setZomato]       = useState(settings.zomato||"");
-  const [city,         setCity]         = useState(settings.city||"");
-  const [gstin,        setGstin]        = useState(settings.gstin||"");
-  const [gstPercent,   setGstPercent]   = useState(String(settings.gstPercent||"5"));
-  const [founderName,  setFounderName]  = useState(settings.founderName||"");
-  const [founderNote,  setFounderNote]  = useState(settings.founderNote||"");
-  const [eventsCount,  setEventsCount]  = useState(settings.eventsCount||"100+");
-  const [about,        setAbout]        = useState(settings.about||"");
-  const [logoImg,      setLogoImg]      = useState(settings.logoImg||"");
-  const [heroImg,      setHeroImg]      = useState(settings.heroImg||"");
-  const [founderImg,   setFounderImg]   = useState(settings.founderImg||"");
-  const [saved,        setSaved]        = useState(false);
+  // ── Individual useState per field ──────────────────────────────────────
+  // This is the ONLY fix that works on mobile.
+  // Each field has its own isolated state — typing in one field
+  // does NOT cause other fields to re-render, so cursor never jumps.
+  const [f_businessName, set_businessName] = useState(settings.businessName||"");
+  const [f_tagline,      set_tagline]      = useState(settings.tagline||"");
+  const [f_heroText,     set_heroText]     = useState(settings.heroText||"");
+  const [f_phone,        set_phone]        = useState(settings.phone||"");
+  const [f_whatsapp,     set_whatsapp]     = useState(settings.whatsapp||"");
+  const [f_facebook,     set_facebook]     = useState(settings.facebook||"");
+  const [f_zomato,       set_zomato]       = useState(settings.zomato||"");
+  const [f_city,         set_city]         = useState(settings.city||"");
+  const [f_gstin,        set_gstin]        = useState(settings.gstin||"");
+  const [f_gstPercent,   set_gstPercent]   = useState(String(settings.gstPercent||"5"));
+  const [f_founderName,  set_founderName]  = useState(settings.founderName||"Debashree Banerjee");
+  const [f_founderNote,  set_founderNote]  = useState(settings.founderNote||"Founder & Head Chef · Delhi NCR");
+  const [f_eventsCount,  set_eventsCount]  = useState(settings.eventsCount||"100+");
+  const [f_about,        set_about]        = useState(settings.about||"");
+  const [f_logoImg,      set_logoImg]      = useState(settings.logoImg||"");
+  const [f_heroImg,      set_heroImg]      = useState(settings.heroImg||"");
+  const [f_founderImg,   set_founderImg]   = useState(settings.founderImg||"");
+  const [saved,          setSaved]         = useState(false);
 
-  const IS = {
-    width:"100%", padding:"11px 13px",
-    border:`1px solid ${T.border}`, borderRadius:11,
-    fontFamily:"'Poppins',sans-serif", fontSize:".86rem",
-    color:T.text, background:T.card2, outline:"none",
-  };
+  const IS = {width:"100%",padding:"11px 13px",border:`1px solid ${T.border}`,
+    borderRadius:11,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",
+    color:T.text,background:T.card2,outline:"none"};
 
   const saveAll = () => {
-    setSettings(s=>({
-      ...s,
-      businessName, tagline, heroText, phone, whatsapp,
-      facebook, zomato, city, gstin,
-      gstPercent: Number(gstPercent)||5,
-      founderName, founderNote, eventsCount, about,
-      logoImg, heroImg, founderImg,
+    setSettings(s=>({...s,
+      businessName:f_businessName, tagline:f_tagline, heroText:f_heroText,
+      phone:f_phone, whatsapp:f_whatsapp, facebook:f_facebook, zomato:f_zomato,
+      city:f_city, gstin:f_gstin, gstPercent:Number(f_gstPercent)||5,
+      founderName:f_founderName, founderNote:f_founderNote,
+      eventsCount:f_eventsCount, about:f_about,
+      logoImg:f_logoImg, heroImg:f_heroImg, founderImg:f_founderImg,
     }));
     setSaved(true);
-    setTimeout(()=>setSaved(false), 2500);
-    show("✅ Business info saved!");
+    setTimeout(()=>setSaved(false),3000);
   };
-
-  // Each field is its own isolated input component with its own setter
-  // React memo prevents other fields re-rendering when one changes
-  const F = ({label, value, onChange, type="text", rows}) => (
-    <div style={{marginBottom:13}}>
-      <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:5,
-        textTransform:"uppercase",letterSpacing:".05em"}}>{label}</div>
-      {rows
-        ? <textarea value={value} onChange={e=>onChange(e.target.value)} rows={rows}
-            style={{...IS,resize:"none",lineHeight:1.65}}/>
-        : <input type={type} value={value} onChange={e=>onChange(e.target.value)} style={IS}/>
-      }
-    </div>
-  );
 
   return(
     <div style={{fontFamily:"'Poppins',sans-serif",background:T.bg,minHeight:"100vh",
@@ -697,28 +677,48 @@ function BusinessForm({settings, setSettings, T, acc, G, show, onBack}){
         {saved&&<div style={{marginLeft:"auto",fontSize:".72rem",color:G.green,fontWeight:700}}>✅ Saved!</div>}
       </div>
       <div style={{padding:"14px"}}>
-        <F label="Business Name"           value={businessName} onChange={setBusinessName}/>
-        <F label="Tagline"                 value={tagline}      onChange={setTagline}/>
-        <F label="Hero Text"               value={heroText}     onChange={setHeroText}/>
-        <F label="Phone Number"            value={phone}        onChange={setPhone} type="tel"/>
-        <F label="WhatsApp (digits only, no +)" value={whatsapp} onChange={setWhatsapp} type="tel"/>
-        <F label="Facebook URL"            value={facebook}     onChange={setFacebook} type="url"/>
-        <F label="Zomato Link"             value={zomato}       onChange={setZomato} type="url"/>
-        <F label="City / Area"             value={city}         onChange={setCity}/>
-        <F label="GSTIN"                   value={gstin}        onChange={setGstin}/>
-        <F label="GST %"                   value={gstPercent}   onChange={setGstPercent} type="number"/>
-        <F label="Founder / Chef Name"     value={founderName}  onChange={setFounderName}/>
-        <F label="Founder Title & Note"    value={founderNote}  onChange={setFounderNote}/>
-        <F label="Events Count (e.g. 100+)" value={eventsCount} onChange={setEventsCount}/>
-        <F label="About Us Text"           value={about}        onChange={setAbout} rows={6}/>
-        <ImageUploader label="App Logo"             currentImg={logoImg}   onUpload={setLogoImg}   T={T} acc={acc} G={G} size="logo"/>
-        <ImageUploader label="Home Screen Hero Photo" currentImg={heroImg} onUpload={setHeroImg}   T={T} acc={acc} G={G} size="large"/>
-        <ImageUploader label="Founder / Chef Photo" currentImg={founderImg} onUpload={setFounderImg} T={T} acc={acc} G={G} size="medium"/>
+        {/* Each input is fully self-contained - NO shared re-render */}
+        {[
+          ["Business Name",              f_businessName, set_businessName, "text"],
+          ["Tagline",                    f_tagline,      set_tagline,      "text"],
+          ["Hero Text",                  f_heroText,     set_heroText,     "text"],
+          ["Phone Number",               f_phone,        set_phone,        "tel"],
+          ["WhatsApp (digits only, no +)",f_whatsapp,   set_whatsapp,     "tel"],
+          ["Facebook URL",               f_facebook,     set_facebook,     "url"],
+          ["Zomato Link",                f_zomato,       set_zomato,       "url"],
+          ["City / Area",                f_city,         set_city,         "text"],
+          ["GSTIN",                      f_gstin,        set_gstin,        "text"],
+          ["GST %",                      f_gstPercent,   set_gstPercent,   "number"],
+          ["Founder / Chef Name",        f_founderName,  set_founderName,  "text"],
+          ["Founder Title & Note",       f_founderNote,  set_founderNote,  "text"],
+          ["Events Count (e.g. 100+)",   f_eventsCount,  set_eventsCount,  "text"],
+        ].map(([lb,val,setter,tp])=>(
+          <div key={lb} style={{marginBottom:13}}>
+            <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:5,
+              textTransform:"uppercase",letterSpacing:".05em"}}>{lb}</div>
+            <input type={tp} value={val}
+              onChange={e=>{const v=e.target.value; setter(v);}}
+              style={IS}/>
+          </div>
+        ))}
+        <div style={{marginBottom:14}}>
+          <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:5,
+            textTransform:"uppercase"}}>About Us Text</div>
+          <textarea value={f_about} onChange={e=>set_about(e.target.value)}
+            rows={6} style={{...IS,resize:"none",lineHeight:1.65}}/>
+        </div>
+        <ImageUploader label="App Logo" currentImg={f_logoImg}
+          onUpload={v=>{set_logoImg(v);}} T={T} acc={acc} G={G} size="logo"/>
+        <ImageUploader label="Home Screen Hero Photo" currentImg={f_heroImg}
+          onUpload={v=>{set_heroImg(v);}} T={T} acc={acc} G={G} size="large"/>
+        <ImageUploader label="Founder / Chef Photo" currentImg={f_founderImg}
+          onUpload={v=>{set_founderImg(v);}} T={T} acc={acc} G={G} size="medium"/>
         <button onClick={saveAll}
-          style={{width:"100%",padding:"13px",background:`linear-gradient(135deg,${acc},${G.goldd})`,
-            color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",
-            fontSize:".88rem",fontWeight:900,cursor:"pointer",marginTop:4}}>
-          Save All Info ✓
+          style={{width:"100%",padding:"13px",
+            background:saved?G.green:`linear-gradient(135deg,${acc},${G.goldd})`,
+            color:"#000",border:"none",borderRadius:50,
+            fontFamily:"'Poppins',sans-serif",fontSize:".88rem",fontWeight:900,cursor:"pointer"}}>
+          {saved?"✅ Saved!":"Save All Info ✓"}
         </button>
         <div style={{textAlign:"center",fontSize:".63rem",color:T.muted,marginTop:8,marginBottom:24}}>
           Tap Save after making all changes
@@ -1193,59 +1193,46 @@ export default function App(){
 
   // ── LIVE PRICE CALCULATOR ────────────────────────────────────────────────
   const calcPrice = (curSel, paxCount) => {
-    // Try to match a combo tier
+    const starters  = curSel.starters?.length  || 0;
+    const mains     = curSel.mains?.length     || 0;
+    const breads    = curSel.breads?.length     || 0;
+    const rice      = curSel.rice?.length       || 0;
+    const desserts  = curSel.desserts?.length   || 0;
+
+    // Base package: ₹199 = 1 starter + 1 main + 1 bread + 1 rice + 1 dessert
+    // Each extra item adds to the price
+    const BASE   = 199;
+    const RATES  = { starters:50, mains:50, breads:20, rice:30, desserts:30 };
+
+    // Try to match a combo tier first (better value for customer)
     const matched = [...combos].filter(c=>c.active).sort((a,b)=>b.price-a.price).find(c=>
-      (curSel.starters?.length||0)>=c.starters &&
-      (curSel.mains?.length||0)>=c.mains &&
-      (curSel.breads?.length||0)>=c.breads &&
-      (curSel.rice?.length||0)>=c.rice &&
-      (curSel.desserts?.length||0)>=c.desserts
+      starters >= c.starters && mains >= c.mains &&
+      breads   >= c.breads   && rice  >= c.rice  && desserts >= c.desserts
     );
-    if(matched) return { tier:matched.label, ppRate:matched.price, total:matched.price*(paxCount||1) };
-    // Fallback: base 199 + per-item rates
-    const BASE=199, S=50, M=50, B=20, R=30, D=30;
-    const pp = BASE +
-      (curSel.starters?.length||0)*S +
-      (curSel.mains?.length||0)*M +
-      (curSel.breads?.length||0)*B +
-      (curSel.rice?.length||0)*R +
-      (curSel.desserts?.length||0)*D;
-    return { tier:"Custom", ppRate:pp, total:pp*(paxCount||1) };
-  };
 
-  useEffect(()=>{const t=setInterval(()=>setHeroIdx(i=>(i+1)%HERO_IMGS.length),3500);return()=>clearInterval(t);},[]);
-  useEffect(()=>{if(occasion?.vegOnly) setDiet("veg");},[occasion]);
-
-  // Filter dishes by diet AND occasion
-  // Use state arrays (editable via admin)
-  const AREAS = areas;
-  const REVIEWS = reviews;
-
-  const filterFood = items => {
-    let filtered = diet==="veg"?items.filter(i=>i.veg):diet==="nonveg"?items.filter(i=>!i.veg):items;
-    if(occasion){
-      filtered = filtered.filter(i=>{
-        const occ = i.occasions||[];
-        return occ.length===0 || occ.includes(occasion.id);
-      });
+    let ppRate, tier;
+    if(matched){
+      ppRate = matched.price;
+      tier   = matched.label;
+    } else {
+      // Fallback: base 199 + per-item pricing for extras above 1
+      const extraS = Math.max(0, starters - 1);
+      const extraM = Math.max(0, mains    - 1);
+      const extraB = Math.max(0, breads   - 1);
+      const extraR = Math.max(0, rice     - 1);
+      const extraD = Math.max(0, desserts - 1);
+      ppRate = BASE
+        + extraS * RATES.starters
+        + extraM * RATES.mains
+        + extraB * RATES.breads
+        + extraR * RATES.rice
+        + extraD * RATES.desserts;
+      tier = "Custom";
     }
-    return filtered.filter(i=>i.active!==false);
+
+    const total = ppRate * (paxCount || 1);
+    return { ppRate, tier, total };
   };
-
-  const toggleSel=(cat,item)=>{const cur=sel[cat]||[],ex=cur.find(i=>i.id===item.id);setSel(s=>({...s,[cat]:ex?cur.filter(i=>i.id!==item.id):[...cur,item]}));};
-  const isChefBox=entry?.id==="box";
-  const completed={start:!!((occasion||isChefBox)&&date&&pax>=1),starters:sel.starters.length>0,mains:sel.mains.length>0,breads:sel.breads.length>0,rice:sel.rice.length>0,desserts:sel.desserts.length>0,condiments:sel.condiments.length>0};
-  const allReady=completed.start&&completed.mains;
-
-  const startBuilder=e=>{setEntry(e);setSel({starters:[],mains:[],breads:[],rice:[],desserts:[],condiments:[]});setStep(0);setOccasion(null);setDate("");setSent(false);setDiet("both");setPax(10);setScreen("builder");};
-
-  const sendWA=()=>{
-    const num=settings.whatsapp.replace(/\D/g,"");
-    const msg=encodeURIComponent(`Hi Mrs Chef! 🍽️\n\n👤 ${form.name}\n📞 ${form.phone}\n📅 ${date}\n🎉 ${occasion?.label}\n👥 ${pax} guests\n🥗 Diet: ${diet}\n📍 ${form.area}\n\n🍢 Starters: ${sel.starters.map(i=>i.name).join(", ")||"None"}\n🍛 Mains: ${sel.mains.map(i=>i.name).join(", ")||"None"}\n🫓 Breads: ${sel.breads.map(i=>i.name).join(", ")||"None"}\n🍚 Rice: ${sel.rice.map(i=>i.name).join(", ")||"None"}\n🍮 Desserts: ${sel.desserts.map(i=>i.name).join(", ")||"None"}\n🫙 Condiments: ${sel.condiments.map(i=>i.name).join(", ")||"None"}\n\n📝 ${form.notes||"None"}`);
-    setOrders(p=>[{id:Date.now(),name:form.name,phone:form.phone,date,occasion:occasion?.label,pax,diet,sel,area:form.area,status:"New",source:"Site",time:new Date().toLocaleTimeString()},...p]);
-    window.open(`https://wa.me/${num}?text=${msg}`,"_blank");setSent(true);
-  };
-
   const css=`
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
     *{box-sizing:border-box;margin:0;padding:0}body{background:${T.bg}}
@@ -1557,7 +1544,7 @@ export default function App(){
             <div style={{width:72,height:72,borderRadius:"50%",background:`${acc}18`,border:`2px solid ${acc}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"2rem",marginBottom:14}}>✅</div>
             <div style={{fontSize:"1.35rem",fontWeight:900,marginBottom:5,color:T.text}}>Order <span style={{color:acc}}>Sent!</span></div>
             <div style={{fontSize:".8rem",color:T.muted2,lineHeight:1.7,marginBottom:16}}>Your custom menu has been sent. We confirm within 2 hours.</div>
-            <a href={`https://wa.me/${settings.whatsapp.replace(/\D/g,"")}`} target="_blank" rel="noreferrer" style={{background:"linear-gradient(135deg,#16A34A,#15803D)",color:"#fff",padding:"12px",borderRadius:50,fontSize:".86rem",fontWeight:900,textDecoration:"none",display:"block",width:"100%",textAlign:"center",marginBottom:9}}>💬 Open WhatsApp</a>
+            <a href={`https://wa.me/${settings.whatsapp.replace(/\D/g,"")}?text=${encodeURIComponent("Hi")}`} target="_blank" rel="noreferrer" style={{background:"linear-gradient(135deg,#16A34A,#15803D)",color:"#fff",padding:"12px",borderRadius:50,fontSize:".86rem",fontWeight:900,textDecoration:"none",display:"block",width:"100%",textAlign:"center",marginBottom:9}}>💬 Open WhatsApp</a>
             <button onClick={()=>{setSent(false);setSel({starters:[],mains:[],breads:[],rice:[],desserts:[]});setStep(0);setOccasion(null);setDate("");setScreen("home");}} style={{background:"transparent",color:T.muted,border:`1px solid ${T.border}`,padding:"10px",borderRadius:50,fontSize:".78rem",cursor:"pointer",fontFamily:"'Poppins',sans-serif",width:"100%"}}>Plan Another</button>
           </div>
         ):(
@@ -1686,7 +1673,7 @@ export default function App(){
           </div>
 
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,margin:"13px 12px 0"}}>
-            <a href={`https://wa.me/${settings.whatsapp.replace(/\D/g,"")}`} target="_blank" rel="noreferrer" style={{background:"linear-gradient(135deg,#15803D,#16A34A)",borderRadius:15,padding:"12px",textDecoration:"none",display:"flex",alignItems:"center",gap:9}}>
+            <a href={`https://wa.me/${settings.whatsapp.replace(/\D/g,"")}?text=${encodeURIComponent("Hi")}`} target="_blank" rel="noreferrer" style={{background:"linear-gradient(135deg,#15803D,#16A34A)",borderRadius:15,padding:"12px",textDecoration:"none",display:"flex",alignItems:"center",gap:9}}>
               <span style={{fontSize:"1.25rem"}}>💬</span><div><div style={{fontSize:".68rem",fontWeight:800,color:"#fff"}}>WhatsApp</div><div style={{fontSize:".54rem",color:"rgba(255,255,255,.6)"}}>Chat directly</div></div>
             </a>
             <a href={settings.zomato} target="_blank" rel="noreferrer" style={{background:"linear-gradient(135deg,#B91C1C,#DC2626)",borderRadius:15,padding:"12px",textDecoration:"none",display:"flex",alignItems:"center",gap:9}}>
