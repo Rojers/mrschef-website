@@ -502,6 +502,7 @@ function ImageUploader({label, currentImg, onUpload, T, acc, G, size="medium"}){
 
       // Step 2: Upload to imgbb — permanent URL, free
       setMsg("Uploading to cloud...");
+
       try {
         const IMGBB = "4ff4ee9593a08050cf055e0cb68f6940";
         const fd2 = new FormData();
@@ -1007,256 +1008,509 @@ function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,c
       </div>
     </div>
   );
-  // ── MENU ITEMS (with occasion filter) ──────────────────────────────────────
-  if(sec==="menu"){
-    const cats=[["starters","Starters","🍢"],["mains","Mains","🍛"],["breads","Breads","🫓"],["rice","Rice","🍚"],["desserts","Desserts","🍮"]];
-    const OccasionPicker=({selected=[],onChange})=>(
-      <div style={{marginBottom:0}}>
-        <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:6,textTransform:"uppercase"}}>Visible for Occasions</div>
-        <div style={{fontSize:".62rem",color:T.muted2,marginBottom:7,lineHeight:1.45}}>Empty = visible for <strong>all</strong> occasions. Select specific ones to restrict.</div>
-        <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-          {OCCASIONS.map(o=>{
-            const checked=selected.includes(o.id);
-            return(              <div key={o.id} onClick={()=>{const n=checked?selected.filter(x=>x!==o.id):[...selected,o.id];onChange(n);}}
-                style={{padding:"5px 10px",borderRadius:50,border:`1.5px solid ${checked?acc:T.border}`,background:checked?`${acc}22`:"transparent",cursor:"pointer",fontSize:".66rem",fontWeight:checked?700:500,color:checked?acc:T.muted,transition:"all .15s"}}>
-                {o.emoji} {o.label}
-              </div>
-            );
-          })}
-        </div>
-        {selected.length>0&&<div style={{fontSize:".6rem",color:acc,marginTop:6,fontWeight:600}}>✓ Restricted to {selected.length} occasion{selected.length>1?"s":""}</div>}
-        {selected.length===0&&<div style={{fontSize:".6rem",color:T.muted2,marginTop:6}}>✓ Visible for all occasions</div>}
+
+// ── MENU ITEMS (with occasion filter) ──────────────────────────────────────
+if(sec==="menu"){
+  const cats=[["starters","Starters","🍢"],["mains","Mains","🍛"],["breads","Breads","🫓"],["rice","Rice","🍚"],["desserts","Desserts","🍮"]];
+  const OccasionPicker=({selected=[],onChange})=>(
+    <div style={{marginBottom:0}}>
+      <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:6,textTransform:"uppercase"}}>Visible for Occasions</div>
+      <div style={{fontSize:".62rem",color:T.muted2,marginBottom:7,lineHeight:1.45}}>Empty = visible for <strong>all</strong> occasions. Select specific ones to restrict.</div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+        {OCCASIONS.map(o=>{
+          const checked=selected.includes(o.id);
+          return(              <div key={o.id} onClick={()=>{const n=checked?selected.filter(x=>x!==o.id):[...selected,o.id];onChange(n);}}
+              style={{padding:"5px 10px",borderRadius:50,border:`1.5px solid ${checked?acc:T.border}`,background:checked?`${acc}22`:"transparent",cursor:"pointer",fontSize:".66rem",fontWeight:checked?700:500,color:checked?acc:T.muted,transition:"all .15s"}}>
+              {o.emoji} {o.label}
+            </div>
+          );
+        })}
       </div>
-    );
-    return(
-      <div style={S}>
-        <Toast/><AdminSHdr T={T} onBack={()=>setSec(null)} title="Menu Items" icon="🍽️"/>
+      {selected.length>0&&<div style={{fontSize:".6rem",color:acc,marginTop:6,fontWeight:600}}>✓ Restricted to {selected.length} occasion{selected.length>1?"s":""}</div>}
+      {selected.length===0&&<div style={{fontSize:".6rem",color:T.muted2,marginTop:6}}>✓ Visible for all occasions</div>}
+    </div>
+  );
+  return(
+    <div style={S}>
+      <Toast/><AdminSHdr T={T} onBack={()=>setSec(null)} title="Menu Items" icon="🍽️"/>
 
-        {/* Edit sheet */}
-        {editItem&&(
-          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:500,display:"flex",alignItems:"flex-end"}} onClick={()=>setEditItem(null)}>
-            <div style={{background:T.card,borderRadius:"22px 22px 0 0",width:"100%",maxWidth:430,padding:"18px 18px 30px",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-              <div style={{height:4,width:40,background:T.card3,borderRadius:50,margin:"0 auto 14px"}}/>
-              <div style={{fontSize:".9rem",fontWeight:900,color:T.text,marginBottom:12}}>Edit: {editItem.item.name}</div>
-              {/* Image preview */}
-              <div style={{height:120,borderRadius:14,overflow:"hidden",marginBottom:12,background:T.card2,border:`1px solid ${T.border}`,position:"relative"}}>
-                {editItem.item.img
-                  ?<img src={editItem.item.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>e.target.style.display="none"}/>
-                  :<div style={{height:"100%",display:"flex",alignItems:"center",justifyContent:"center",color:T.muted,fontSize:".74rem"}}>No image · paste URL below</div>}
-                <div style={{position:"absolute",top:7,left:7,width:10,height:10,borderRadius:2,background:editItem.item.veg?G.green:G.red}}/>
-              </div>
-              <AdminInp T={T} label="Dish Name" value={editItem.item.name} onChange={v=>setEditItem({...editItem,item:{...editItem.item,name:v}})}/>
-              <ImageUploader label="Dish Photo" currentImg={editItem.item.img||""} onUpload={v=>setEditItem({...editItem,item:{...editItem.item,img:v}})} T={T} acc={acc} G={G} size="medium"/>
-              <AdminTog T={T} acc={acc} on={editItem.item.veg} onChange={v=>setEditItem({...editItem,item:{...editItem.item,veg:v}})} label={editItem.item.veg?"🟢 Vegetarian":"🔴 Non-Vegetarian"}/>
-              <AdminTog T={T} acc={acc} on={editItem.item.active} onChange={v=>setEditItem({...editItem,item:{...editItem.item,active:v}})} label={editItem.item.active?"✅ Visible to customers":"⏸️ Hidden"}/>
-              <div style={{borderTop:`1px solid ${T.border}`,paddingTop:12,marginTop:2}}>
-                <OccasionPicker selected={editItem.item.occasions||[]} onChange={v=>setEditItem({...editItem,item:{...editItem.item,occasions:v}})}/>
-              </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginTop:16}}>
-                <button onClick={()=>{updItem(editItem.cat,editItem.item.id,editItem.item);setEditItem(null);show("✅ Saved!");}} style={{padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontSize:".84rem",fontWeight:900,cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Save ✓</button>
-                <button onClick={()=>delItem(editItem.cat,editItem.item.id)} style={{padding:"12px",background:`${G.red}18`,color:G.red,border:`1px solid ${G.red}33`,borderRadius:50,fontSize:".84rem",fontWeight:700,cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Delete 🗑️</button>
-              </div>
+      {/* Edit sheet */}
+      {editItem&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:500,display:"flex",alignItems:"flex-end"}} onClick={()=>setEditItem(null)}>
+          <div style={{background:T.card,borderRadius:"22px 22px 0 0",width:"100%",maxWidth:430,padding:"18px 18px 30px",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{height:4,width:40,background:T.card3,borderRadius:50,margin:"0 auto 14px"}}/>
+            <div style={{fontSize:".9rem",fontWeight:900,color:T.text,marginBottom:12}}>Edit: {editItem.item.name}</div>
+            {/* Image preview */}
+            <div style={{height:120,borderRadius:14,overflow:"hidden",marginBottom:12,background:T.card2,border:`1px solid ${T.border}`,position:"relative"}}>
+              {editItem.item.img
+                ?<img src={editItem.item.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>e.target.style.display="none"}/>
+                :<div style={{height:"100%",display:"flex",alignItems:"center",justifyContent:"center",color:T.muted,fontSize:".74rem"}}>No image · paste URL below</div>}
+              <div style={{position:"absolute",top:7,left:7,width:10,height:10,borderRadius:2,background:editItem.item.veg?G.green:G.red}}/>
+            </div>
+            <AdminInp T={T} label="Dish Name" value={editItem.item.name} onChange={v=>setEditItem({...editItem,item:{...editItem.item,name:v}})}/>
+            <ImageUploader label="Dish Photo" currentImg={editItem.item.img||""} onUpload={v=>setEditItem({...editItem,item:{...editItem.item,img:v}})} T={T} acc={acc} G={G} size="medium"/>
+            <AdminTog T={T} acc={acc} on={editItem.item.veg} onChange={v=>setEditItem({...editItem,item:{...editItem.item,veg:v}})} label={editItem.item.veg?"🟢 Vegetarian":"🔴 Non-Vegetarian"}/>
+            <AdminTog T={T} acc={acc} on={editItem.item.active} onChange={v=>setEditItem({...editItem,item:{...editItem.item,active:v}})} label={editItem.item.active?"✅ Visible to customers":"⏸️ Hidden"}/>
+            <div style={{borderTop:`1px solid ${T.border}`,paddingTop:12,marginTop:2}}>
+              <OccasionPicker selected={editItem.item.occasions||[]} onChange={v=>setEditItem({...editItem,item:{...editItem.item,occasions:v}})}/>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginTop:16}}>
+              <button onClick={()=>{updItem(editItem.cat,editItem.item.id,editItem.item);setEditItem(null);show("✅ Saved!");}} style={{padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontSize:".84rem",fontWeight:900,cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Save ✓</button>
+              <button onClick={()=>delItem(editItem.cat,editItem.item.id)} style={{padding:"12px",background:`${G.red}18`,color:G.red,border:`1px solid ${G.red}33`,borderRadius:50,fontSize:".84rem",fontWeight:700,cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Delete 🗑️</button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Add sheet */}
-        {addingTo&&(
-          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:500,display:"flex",alignItems:"flex-end"}} onClick={()=>setAddingTo(null)}>
-            <div style={{background:T.card,borderRadius:"22px 22px 0 0",width:"100%",maxWidth:430,padding:"18px 18px 30px",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-              <div style={{height:4,width:40,background:T.card3,borderRadius:50,margin:"0 auto 14px"}}/>
-              <div style={{fontSize:".9rem",fontWeight:900,color:T.text,marginBottom:12}}>Add to {addingTo}</div>
-              <AdminInp T={T} label="Dish Name *" value={newItem.name} onChange={v=>setNewItem(p=>({...p,name:v}))} ph="e.g. Kuttu Puri"/>
-              <ImageUploader label="Dish Photo" currentImg={newItem.img||""} onUpload={v=>setNewItem(n=>({...n,img:v}))} T={T} acc={acc} G={G} size="medium"/>
-              <AdminTog T={T} acc={acc} on={newItem.veg} onChange={v=>setNewItem({...newItem,veg:v})} label={newItem.veg?"🟢 Vegetarian":"🔴 Non-Vegetarian"}/>
-              <div style={{borderTop:`1px solid ${T.border}`,paddingTop:12,marginTop:2}}>
-                <OccasionPicker selected={newItem.occasions||[]} onChange={v=>setNewItem({...newItem,occasions:v})}/>
-              </div>
-              <button onClick={()=>addItem(addingTo)} style={{width:"100%",marginTop:14,padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontSize:".86rem",fontWeight:900,cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>+ Add Item</button>
+      {/* Add sheet */}
+      {addingTo&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:500,display:"flex",alignItems:"flex-end"}} onClick={()=>setAddingTo(null)}>
+          <div style={{background:T.card,borderRadius:"22px 22px 0 0",width:"100%",maxWidth:430,padding:"18px 18px 30px",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{height:4,width:40,background:T.card3,borderRadius:50,margin:"0 auto 14px"}}/>
+            <div style={{fontSize:".9rem",fontWeight:900,color:T.text,marginBottom:12}}>Add to {addingTo}</div>
+            <AdminInp T={T} label="Dish Name *" value={newItem.name} onChange={v=>setNewItem(p=>({...p,name:v}))} ph="e.g. Kuttu Puri"/>
+            <ImageUploader label="Dish Photo" currentImg={newItem.img||""} onUpload={v=>setNewItem(n=>({...n,img:v}))} T={T} acc={acc} G={G} size="medium"/>
+            <AdminTog T={T} acc={acc} on={newItem.veg} onChange={v=>setNewItem({...newItem,veg:v})} label={newItem.veg?"🟢 Vegetarian":"🔴 Non-Vegetarian"}/>
+            <div style={{borderTop:`1px solid ${T.border}`,paddingTop:12,marginTop:2}}>
+              <OccasionPicker selected={newItem.occasions||[]} onChange={v=>setNewItem({...newItem,occasions:v})}/>
             </div>
+            <button onClick={()=>addItem(addingTo)} style={{width:"100%",marginTop:14,padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontSize:".86rem",fontWeight:900,cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>+ Add Item</button>
           </div>
-        )}
+        </div>
+      )}
 
-        <div style={{padding:"10px 14px"}}>
-          {cats.map(([cat,label,icon])=>(
-            <div key={cat} style={{marginBottom:18}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-                <div style={{fontSize:".88rem",fontWeight:800,color:acc}}>{icon} {label} <span style={{fontSize:".66rem",color:T.muted,fontWeight:400}}>({food[cat].length})</span></div>
-                <button onClick={()=>setAddingTo(cat)} style={{padding:"5px 13px",background:`${acc}18`,color:acc,border:`1px solid ${acc}44`,borderRadius:50,fontSize:".66rem",fontWeight:700,cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>+ Add</button>
-              </div>
-              {food[cat].map(item=>{
-                const restricted=(item.occasions||[]).length>0;
-                return(
-                  <div key={item.id} onClick={()=>setEditItem({cat,item:{...item,occasions:item.occasions||[]}})} style={{display:"flex",alignItems:"center",gap:10,background:T.card,borderRadius:14,padding:"10px 12px",marginBottom:7,border:`1px solid ${item.active?T.border:G.red+"33"}`,cursor:"pointer",opacity:item.active?1:.55}}>
-                    <div style={{width:52,height:52,borderRadius:12,overflow:"hidden",flexShrink:0,background:T.card2,border:`1px solid ${T.border}`}}>
-                      {item.img?<img src={item.img} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>e.target.style.display="none"}/>:<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.2rem"}}>🍽️</div>}
-                    </div>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:".8rem",fontWeight:700,color:T.text}}>{item.name}</div>
-                      <div style={{display:"flex",gap:5,marginTop:2,alignItems:"center",flexWrap:"wrap"}}>
-                        <div style={{width:7,height:7,borderRadius:1,background:item.veg?G.green:G.red}}/>
-                        <span style={{fontSize:".62rem",color:T.muted}}>{item.veg?"Veg":"NV"}</span>
-                        {!item.active&&<span style={{fontSize:".58rem",color:G.red,fontWeight:600}}>· Hidden</span>}
-                        {restricted
-                          ?<span style={{fontSize:".58rem",color:acc,fontWeight:600,background:`${acc}18`,padding:"1px 6px",borderRadius:50}}>🎯 {(item.occasions||[]).length} occasions</span>
-                          :<span style={{fontSize:".58rem",color:T.muted}}>· All occasions</span>}
-                      </div>
-                    </div>
-                    <span style={{fontSize:".8rem",color:T.muted}}>✏️</span>
+      <div style={{padding:"10px 14px"}}>
+        {cats.map(([cat,label,icon])=>(
+          <div key={cat} style={{marginBottom:18}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+              <div style={{fontSize:".88rem",fontWeight:800,color:acc}}>{icon} {label} <span style={{fontSize:".66rem",color:T.muted,fontWeight:400}}>({food[cat].length})</span></div>
+              <button onClick={()=>setAddingTo(cat)} style={{padding:"5px 13px",background:`${acc}18`,color:acc,border:`1px solid ${acc}44`,borderRadius:50,fontSize:".66rem",fontWeight:700,cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>+ Add</button>
+            </div>
+            {food[cat].map(item=>{
+              const restricted=(item.occasions||[]).length>0;
+              return(
+                <div key={item.id} onClick={()=>setEditItem({cat,item:{...item,occasions:item.occasions||[]}})} style={{display:"flex",alignItems:"center",gap:10,background:T.card,borderRadius:14,padding:"10px 12px",marginBottom:7,border:`1px solid ${item.active?T.border:G.red+"33"}`,cursor:"pointer",opacity:item.active?1:.55}}>
+                  <div style={{width:52,height:52,borderRadius:12,overflow:"hidden",flexShrink:0,background:T.card2,border:`1px solid ${T.border}`}}>
+                    {item.img?<img src={item.img} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>e.target.style.display="none"}/>:<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.2rem"}}>🍽️</div>}
                   </div>
-                );
-              })}
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:".8rem",fontWeight:700,color:T.text}}>{item.name}</div>
+                    <div style={{display:"flex",gap:5,marginTop:2,alignItems:"center",flexWrap:"wrap"}}>
+                      <div style={{width:7,height:7,borderRadius:1,background:item.veg?G.green:G.red}}/>
+                      <span style={{fontSize:".62rem",color:T.muted}}>{item.veg?"Veg":"NV"}</span>
+                      {!item.active&&<span style={{fontSize:".58rem",color:G.red,fontWeight:600}}>· Hidden</span>}
+                      {restricted
+                        ?<span style={{fontSize:".58rem",color:acc,fontWeight:600,background:`${acc}18`,padding:"1px 6px",borderRadius:50}}>🎯 {(item.occasions||[]).length} occasions</span>
+                        :<span style={{fontSize:".58rem",color:T.muted}}>· All occasions</span>}
+                    </div>
+                  </div>
+                  <span style={{fontSize:".8rem",color:T.muted}}>✏️</span>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── PRICING ─────────────────────────────────────────────────────────────────
+if(sec==="combos") return(
+  <div style={S}>
+    <Toast/><AdminSHdr T={T} onBack={()=>setSec(null)} title="Pricing & Combinations" icon="💰"/>
+    <div style={{padding:"12px 14px"}}>
+      <div style={{background:T.card,borderRadius:14,padding:"12px 14px",marginBottom:14,border:`1px solid ${T.border}`}}>
+        <div style={{fontSize:".76rem",fontWeight:800,color:T.text,marginBottom:7}}>👥 Max Guests per Booking</div>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <input type="number" value={settings.maxGuests} onChange={e=>setSettings({...settings,maxGuests:Number(e.target.value)})}
+            style={{width:80,padding:"9px",border:`1px solid ${acc}`,borderRadius:10,fontFamily:"'Poppins',sans-serif",fontSize:"1.1rem",fontWeight:900,color:acc,background:T.card2,outline:"none",textAlign:"center"}}/>
+          <div style={{fontSize:".7rem",color:T.muted}}>Max guests per booking</div>
+        </div>
+      </div>
+      <div style={{background:T.card,borderRadius:14,padding:"12px 14px",marginBottom:14,border:`1px solid ${T.border}`}}>
+        <div style={{fontSize:".76rem",fontWeight:800,color:T.text,marginBottom:4}}>GST Settings</div>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{fontSize:".7rem",color:T.muted}}>GST %</div>
+          <input type="number" value={settings.gstPercent||5} onChange={e=>setSettings({...settings,gstPercent:Number(e.target.value)})}
+            style={{width:64,padding:"7px 10px",border:`1px solid ${T.border}`,borderRadius:9,fontFamily:"'Poppins',sans-serif",fontSize:".88rem",fontWeight:900,color:T.text,background:T.card2,outline:"none",textAlign:"center"}}/>
+          <div style={{fontSize:".7rem",color:T.muted}}>GSTIN</div>
+          <input value={settings.gstin||""} onChange={e=>setSettings({...settings,gstin:e.target.value})}
+            style={{flex:1,padding:"7px 10px",border:`1px solid ${T.border}`,borderRadius:9,fontFamily:"'Poppins',sans-serif",fontSize:".78rem",color:T.text,background:T.card2,outline:"none"}}/>
+        </div>
+      </div>
+      {combos.map((c,i)=>(
+        <div key={c.id} style={{background:T.card,borderRadius:18,padding:"14px",marginBottom:12,border:`1px solid ${c.active?acc+"55":T.border}`}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+            <input value={c.label} onChange={e=>{const n=[...combos];n[i]={...n[i],label:e.target.value};setCombos(n);}} style={{background:"transparent",border:"none",color:acc,fontFamily:"'Poppins',sans-serif",fontSize:".9rem",fontWeight:900,outline:"none",width:80}}/>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <div style={{display:"flex",alignItems:"center",gap:3}}>
+                <span style={{fontSize:".7rem",color:T.muted}}>₹</span>
+                <input type="number" value={c.price} onChange={e=>{const n=[...combos];n[i]={...n[i],price:Number(e.target.value)};setCombos(n);}} style={{width:62,padding:"5px 6px",border:`1px solid ${T.border}`,borderRadius:8,fontFamily:"'Poppins',sans-serif",fontSize:".88rem",fontWeight:900,color:T.text,background:T.card2,outline:"none",textAlign:"center"}}/>
+                <span style={{fontSize:".62rem",color:T.muted}}>/pp</span>
+              </div>
+              <div onClick={()=>{const n=[...combos];n[i]={...n[i],active:!n[i].active};setCombos(n);}} style={{width:40,height:22,borderRadius:50,background:c.active?acc:T.card3,position:"relative",cursor:"pointer",transition:"background .2s"}}>
+                <div style={{position:"absolute",top:2,left:c.active?20:2,width:18,height:18,borderRadius:"50%",background:"#fff",transition:"left .2s"}}/>
+              </div>
+            </div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:6}}>
+            {[["starters","🍢"],["mains","🍛"],["breads","🫓"],["rice","🍚"],["desserts","🍮"]].map(([k,ic])=>(
+              <div key={k} style={{textAlign:"center"}}>
+                <div style={{fontSize:".7rem",marginBottom:3}}>{ic}</div>
+                <input type="number" min="0" max="10" value={c[k]} onChange={e=>{const n=[...combos];n[i]={...n[i],[k]:Number(e.target.value)};setCombos(n);}} style={{width:"100%",padding:"5px 2px",border:`1px solid ${T.border}`,borderRadius:7,fontFamily:"'Poppins',sans-serif",fontSize:".82rem",fontWeight:800,color:acc,background:T.card2,outline:"none",textAlign:"center"}}/>
+                <div style={{fontSize:".55rem",color:T.muted,marginTop:2,textTransform:"capitalize"}}>{k}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+      <button onClick={()=>setCombos([...combos,{id:"c"+Date.now(),label:"New",starters:2,mains:2,breads:1,rice:1,desserts:1,price:299,active:true}])} style={{width:"100%",padding:"11px",background:T.card2,color:acc,border:`1px solid ${acc}44`,borderRadius:50,fontSize:".8rem",fontWeight:700,cursor:"pointer",fontFamily:"'Poppins',sans-serif",marginBottom:10}}>+ Add Package</button>
+      <button onClick={()=>show("✅ Pricing saved!")} style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",fontWeight:900,cursor:"pointer"}}>Save Pricing ✓</button>
+    </div>
+  </div>
+);
+
+// ── OFFERS ───────────────────────────────────────────────────────────────────
+if(sec==="offers") return(
+  <div style={S}>
+    <Toast/><AdminSHdr T={T} onBack={()=>setSec(null)} title="Offers & Discounts" icon="🎁"/>
+    <div style={{padding:"12px 14px"}}>
+      {offers.map((o,i)=>(
+        <div key={o.id} style={{background:T.card,borderRadius:16,padding:"14px",marginBottom:10,border:`1px solid ${o.active?"#8B5CF644":T.border}`}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+            <div style={{flex:1,paddingRight:10}}>
+              <input value={o.label} onChange={e=>{const n=[...offers];n[i]={...n[i],label:e.target.value};setOffers(n);}} style={{background:"transparent",border:"none",color:T.text,fontFamily:"'Poppins',sans-serif",fontSize:".84rem",fontWeight:800,outline:"none",width:"100%",marginBottom:3}}/>
+              <input value={o.desc} onChange={e=>{const n=[...offers];n[i]={...n[i],desc:e.target.value};setOffers(n);}} style={{background:"transparent",border:"none",color:T.muted2,fontFamily:"'Poppins',sans-serif",fontSize:".7rem",outline:"none",width:"100%"}}/>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:5}}>
+              <input type="number" min="0" max="50" value={o.discount} onChange={e=>{const n=[...offers];n[i]={...n[i],discount:Number(e.target.value)};setOffers(n);}} style={{width:42,padding:"4px 5px",border:`1px solid ${T.border}`,borderRadius:7,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",fontWeight:900,color:acc,background:T.card2,outline:"none",textAlign:"center"}}/>
+              <span style={{fontSize:".7rem",color:T.muted}}>%</span>
+            </div>
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div onClick={()=>{const n=[...offers];n[i]={...n[i],active:!n[i].active};setOffers(n);}} style={{display:"flex",alignItems:"center",gap:7,cursor:"pointer"}}>
+              <div style={{width:40,height:22,borderRadius:50,background:o.active?G.purple:T.card3,position:"relative",transition:"background .2s"}}>
+                <div style={{position:"absolute",top:2,left:o.active?20:2,width:18,height:18,borderRadius:"50%",background:"#fff",transition:"left .2s"}}/>
+              </div>
+              <span style={{fontSize:".72rem",color:o.active?G.purple:T.muted,fontFamily:"'Poppins',sans-serif"}}>{o.active?"Active":"Off"}</span>
+            </div>
+            <button onClick={()=>{setOffers(offers.filter((_,j)=>j!==i));show("Removed");}} style={{background:`${G.red}18`,color:G.red,border:`1px solid ${G.red}33`,padding:"4px 12px",borderRadius:50,fontSize:".63rem",cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Remove</button>
+          </div>
+        </div>
+      ))}
+      <button onClick={()=>setOffers([...offers,{id:"o"+Date.now(),label:"New Offer",desc:"Description",discount:10,active:true}])} style={{width:"100%",padding:"11px",background:T.card2,color:G.purple,border:`1px solid ${G.purple}44`,borderRadius:50,fontSize:".8rem",fontWeight:700,cursor:"pointer",fontFamily:"'Poppins',sans-serif",marginBottom:10}}>+ Add Offer</button>
+      <button onClick={()=>show("✅ Saved!")} style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",fontWeight:900,cursor:"pointer"}}>Save Offers ✓</button>
+    </div>
+  </div>
+);
+
+// ── BUSINESS — standalone component, no hooks-in-if violation ───────────────
+if(sec==="business") return(
+  <BusinessForm
+    settings={settings} setSettings={setSettings}
+    T={T} acc={acc} G={G} show={show}
+    onBack={()=>setSec(null)}
+  />
+);
+
+// ── APPEARANCE ───────────────────────────────────────────────────────────────
+if(sec==="appearance") return(
+  <div style={S}>
+    <Toast/><AdminSHdr T={T} onBack={()=>setSec(null)} title="Appearance" icon="🎨"/>
+    <div style={{padding:"12px 14px"}}>
+      <div style={{background:T.card,borderRadius:16,padding:"14px",marginBottom:14,border:`1px solid ${T.border}`}}>
+        <div style={{fontSize:".78rem",fontWeight:800,color:T.text,marginBottom:12}}>App Theme</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          {[["dark","⬛ Dark","#0A0A0A","#F0F0F0"],["light","⬜ Light","#F4F4F4","#111"]].map(([val,lb,bg,fg])=>(
+            <div key={val} onClick={()=>setSettings({...settings,theme:val})} style={{borderRadius:14,padding:"14px",background:bg,border:`2px solid ${settings.theme===val?acc:"transparent"}`,cursor:"pointer",textAlign:"center",boxShadow:settings.theme===val?`0 0 14px ${acc}55`:"0 2px 8px rgba(0,0,0,.15)"}}>
+              <div style={{fontSize:".82rem",fontWeight:700,color:fg,marginBottom:6}}>{lb}</div>
+              <div style={{display:"flex",gap:4,justifyContent:"center"}}>{[acc,G.green,G.red].map(c=><div key={c} style={{width:10,height:10,borderRadius:"50%",background:c}}/>)}</div>
             </div>
           ))}
         </div>
       </div>
-    );
-  }
+      <div style={{background:T.card,borderRadius:16,padding:"14px",marginBottom:14,border:`1px solid ${T.border}`}}>
+        <div style={{fontSize:".78rem",fontWeight:800,color:T.text,marginBottom:12}}>Accent Colour</div>
+        <div style={{display:"flex",gap:9,flexWrap:"wrap",marginBottom:14}}>
+          {["#F0B429","#FF2D7E","#22C55E","#3B82F6","#8B5CF6","#F97316","#EF4444","#06B6D4","#EC4899","#14B8A6"].map(col=>(
+            <div key={col} onClick={()=>setSettings({...settings,accent:col})} style={{width:34,height:34,borderRadius:"50%",background:col,cursor:"pointer",border:`3px solid ${settings.accent===col?"#fff":"transparent"}`,transform:settings.accent===col?"scale(1.2)":"scale(1)",transition:"all .2s",boxShadow:settings.accent===col?`0 0 14px ${col}99`:"none"}}/>
+          ))}
+        </div>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <input type="color" value={settings.accent} onChange={e=>setSettings({...settings,accent:e.target.value})} style={{width:40,height:32,borderRadius:8,border:`1px solid ${T.border}`,cursor:"pointer",padding:2}}/>
+          <input value={settings.accent} onChange={e=>setSettings({...settings,accent:e.target.value})} style={{flex:1,padding:"7px 10px",border:`1px solid ${T.border}`,borderRadius:8,fontFamily:"'Poppins',sans-serif",fontSize:".8rem",color:T.text,background:T.card2,outline:"none"}}/>
+        </div>
+      </div>
+      {/* Preview */}
+      <div style={{background:T.card,borderRadius:16,padding:"14px",marginBottom:14,border:`1px solid ${T.border}`}}>
+        <div style={{fontSize:".76rem",fontWeight:800,color:T.text,marginBottom:10}}>Preview</div>
+        <div style={{display:"flex",gap:8,alignItems:"center",background:T.bg,borderRadius:12,padding:"12px"}}>
+          <div style={{width:42,height:42,borderRadius:"50%",background:`linear-gradient(135deg,${acc},${G.goldd})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.2rem"}}>👩‍🍳</div>
+          <div><div style={{fontSize:".95rem",fontWeight:900,color:T.text}}>Mrs <span style={{color:acc}}>Chef</span></div><div style={{fontSize:".6rem",color:T.muted}}>Home Kitchen</div></div>
+          <button style={{marginLeft:"auto",padding:"7px 14px",background:`linear-gradient(135deg,${acc},${G.goldd})`,border:"none",borderRadius:50,fontSize:".7rem",fontWeight:800,color:"#000",cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Book Now</button>
+        </div>
+      </div>
+      <button onClick={()=>show("✅ Saved!")} style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",fontWeight:900,cursor:"pointer"}}>Save ✓</button>
+    </div>
+  </div>
+);
 
-  // ── PRICING ─────────────────────────────────────────────────────────────────
-  if(sec==="combos") return(
+// ── PASSWORD ─────────────────────────────────────────────────────────────────
+if(sec==="password") return(
+  <div style={S}>
+  );
+
+// ── MENU ITEMS (with occasion filter) ──────────────────────────────────────
+if(sec==="menu"){
+  const cats=[["starters","Starters","🍢"],["mains","Mains","🍛"],["breads","Breads","🫓"],["rice","Rice","🍚"],["desserts","Desserts","🍮"]];
+  const OccasionPicker=({selected=[],onChange})=>(
+    <div style={{marginBottom:0}}>
+      <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:6,textTransform:"uppercase"}}>Visible for Occasions</div>
+      <div style={{fontSize:".62rem",color:T.muted2,marginBottom:7,lineHeight:1.45}}>Empty = visible for <strong>all</strong> occasions. Select specific ones to restrict.</div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+        {OCCASIONS.map(o=>{
+          const checked=selected.includes(o.id);
+          return(              <div key={o.id} onClick={()=>{const n=checked?selected.filter(x=>x!==o.id):[...selected,o.id];onChange(n);}}
+              style={{padding:"5px 10px",borderRadius:50,border:`1.5px solid ${checked?acc:T.border}`,background:checked?`${acc}22`:"transparent",cursor:"pointer",fontSize:".66rem",fontWeight:checked?700:500,color:checked?acc:T.muted,transition:"all .15s"}}>
+              {o.emoji} {o.label}
+            </div>
+          );
+        })}
+      </div>
+      {selected.length>0&&<div style={{fontSize:".6rem",color:acc,marginTop:6,fontWeight:600}}>✓ Restricted to {selected.length} occasion{selected.length>1?"s":""}</div>}
+      {selected.length===0&&<div style={{fontSize:".6rem",color:T.muted2,marginTop:6}}>✓ Visible for all occasions</div>}
+    </div>
+  );
+  return(
     <div style={S}>
-      <Toast/><AdminSHdr T={T} onBack={()=>setSec(null)} title="Pricing & Combinations" icon="💰"/>
-      <div style={{padding:"12px 14px"}}>
-        <div style={{background:T.card,borderRadius:14,padding:"12px 14px",marginBottom:14,border:`1px solid ${T.border}`}}>
-          <div style={{fontSize:".76rem",fontWeight:800,color:T.text,marginBottom:7}}>👥 Max Guests per Booking</div>
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <input type="number" value={settings.maxGuests} onChange={e=>setSettings({...settings,maxGuests:Number(e.target.value)})}
-              style={{width:80,padding:"9px",border:`1px solid ${acc}`,borderRadius:10,fontFamily:"'Poppins',sans-serif",fontSize:"1.1rem",fontWeight:900,color:acc,background:T.card2,outline:"none",textAlign:"center"}}/>
-            <div style={{fontSize:".7rem",color:T.muted}}>Max guests per booking</div>
+      <Toast/><AdminSHdr T={T} onBack={()=>setSec(null)} title="Menu Items" icon="🍽️"/>
+
+      {/* Edit sheet */}
+      {editItem&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:500,display:"flex",alignItems:"flex-end"}} onClick={()=>setEditItem(null)}>
+          <div style={{background:T.card,borderRadius:"22px 22px 0 0",width:"100%",maxWidth:430,padding:"18px 18px 30px",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{height:4,width:40,background:T.card3,borderRadius:50,margin:"0 auto 14px"}}/>
+            <div style={{fontSize:".9rem",fontWeight:900,color:T.text,marginBottom:12}}>Edit: {editItem.item.name}</div>
+            {/* Image preview */}
+            <div style={{height:120,borderRadius:14,overflow:"hidden",marginBottom:12,background:T.card2,border:`1px solid ${T.border}`,position:"relative"}}>
+              {editItem.item.img
+                ?<img src={editItem.item.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>e.target.style.display="none"}/>
+                :<div style={{height:"100%",display:"flex",alignItems:"center",justifyContent:"center",color:T.muted,fontSize:".74rem"}}>No image · paste URL below</div>}
+              <div style={{position:"absolute",top:7,left:7,width:10,height:10,borderRadius:2,background:editItem.item.veg?G.green:G.red}}/>
+            </div>
+            <AdminInp T={T} label="Dish Name" value={editItem.item.name} onChange={v=>setEditItem({...editItem,item:{...editItem.item,name:v}})}/>
+            <ImageUploader label="Dish Photo" currentImg={editItem.item.img||""} onUpload={v=>setEditItem({...editItem,item:{...editItem.item,img:v}})} T={T} acc={acc} G={G} size="medium"/>
+            <AdminTog T={T} acc={acc} on={editItem.item.veg} onChange={v=>setEditItem({...editItem,item:{...editItem.item,veg:v}})} label={editItem.item.veg?"🟢 Vegetarian":"🔴 Non-Vegetarian"}/>
+            <AdminTog T={T} acc={acc} on={editItem.item.active} onChange={v=>setEditItem({...editItem,item:{...editItem.item,active:v}})} label={editItem.item.active?"✅ Visible to customers":"⏸️ Hidden"}/>
+            <div style={{borderTop:`1px solid ${T.border}`,paddingTop:12,marginTop:2}}>
+              <OccasionPicker selected={editItem.item.occasions||[]} onChange={v=>setEditItem({...editItem,item:{...editItem.item,occasions:v}})}/>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginTop:16}}>
+              <button onClick={()=>{updItem(editItem.cat,editItem.item.id,editItem.item);setEditItem(null);show("✅ Saved!");}} style={{padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontSize:".84rem",fontWeight:900,cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Save ✓</button>
+              <button onClick={()=>delItem(editItem.cat,editItem.item.id)} style={{padding:"12px",background:`${G.red}18`,color:G.red,border:`1px solid ${G.red}33`,borderRadius:50,fontSize:".84rem",fontWeight:700,cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Delete 🗑️</button>
+            </div>
           </div>
         </div>
-        <div style={{background:T.card,borderRadius:14,padding:"12px 14px",marginBottom:14,border:`1px solid ${T.border}`}}>
-          <div style={{fontSize:".76rem",fontWeight:800,color:T.text,marginBottom:4}}>GST Settings</div>
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <div style={{fontSize:".7rem",color:T.muted}}>GST %</div>
-            <input type="number" value={settings.gstPercent||5} onChange={e=>setSettings({...settings,gstPercent:Number(e.target.value)})}
-              style={{width:64,padding:"7px 10px",border:`1px solid ${T.border}`,borderRadius:9,fontFamily:"'Poppins',sans-serif",fontSize:".88rem",fontWeight:900,color:T.text,background:T.card2,outline:"none",textAlign:"center"}}/>
-            <div style={{fontSize:".7rem",color:T.muted}}>GSTIN</div>
-            <input value={settings.gstin||""} onChange={e=>setSettings({...settings,gstin:e.target.value})}
-              style={{flex:1,padding:"7px 10px",border:`1px solid ${T.border}`,borderRadius:9,fontFamily:"'Poppins',sans-serif",fontSize:".78rem",color:T.text,background:T.card2,outline:"none"}}/>
+      )}
+
+      {/* Add sheet */}
+      {addingTo&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:500,display:"flex",alignItems:"flex-end"}} onClick={()=>setAddingTo(null)}>
+          <div style={{background:T.card,borderRadius:"22px 22px 0 0",width:"100%",maxWidth:430,padding:"18px 18px 30px",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{height:4,width:40,background:T.card3,borderRadius:50,margin:"0 auto 14px"}}/>
+            <div style={{fontSize:".9rem",fontWeight:900,color:T.text,marginBottom:12}}>Add to {addingTo}</div>
+            <AdminInp T={T} label="Dish Name *" value={newItem.name} onChange={v=>setNewItem(p=>({...p,name:v}))} ph="e.g. Kuttu Puri"/>
+            <ImageUploader label="Dish Photo" currentImg={newItem.img||""} onUpload={v=>setNewItem(n=>({...n,img:v}))} T={T} acc={acc} G={G} size="medium"/>
+            <AdminTog T={T} acc={acc} on={newItem.veg} onChange={v=>setNewItem({...newItem,veg:v})} label={newItem.veg?"🟢 Vegetarian":"🔴 Non-Vegetarian"}/>
+            <div style={{borderTop:`1px solid ${T.border}`,paddingTop:12,marginTop:2}}>
+              <OccasionPicker selected={newItem.occasions||[]} onChange={v=>setNewItem({...newItem,occasions:v})}/>
+            </div>
+            <button onClick={()=>addItem(addingTo)} style={{width:"100%",marginTop:14,padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontSize:".86rem",fontWeight:900,cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>+ Add Item</button>
           </div>
         </div>
-        {combos.map((c,i)=>(
-          <div key={c.id} style={{background:T.card,borderRadius:18,padding:"14px",marginBottom:12,border:`1px solid ${c.active?acc+"55":T.border}`}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-              <input value={c.label} onChange={e=>{const n=[...combos];n[i]={...n[i],label:e.target.value};setCombos(n);}} style={{background:"transparent",border:"none",color:acc,fontFamily:"'Poppins',sans-serif",fontSize:".9rem",fontWeight:900,outline:"none",width:80}}/>
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <div style={{display:"flex",alignItems:"center",gap:3}}>
-                  <span style={{fontSize:".7rem",color:T.muted}}>₹</span>
-                  <input type="number" value={c.price} onChange={e=>{const n=[...combos];n[i]={...n[i],price:Number(e.target.value)};setCombos(n);}} style={{width:62,padding:"5px 6px",border:`1px solid ${T.border}`,borderRadius:8,fontFamily:"'Poppins',sans-serif",fontSize:".88rem",fontWeight:900,color:T.text,background:T.card2,outline:"none",textAlign:"center"}}/>
-                  <span style={{fontSize:".62rem",color:T.muted}}>/pp</span>
-                </div>
-                <div onClick={()=>{const n=[...combos];n[i]={...n[i],active:!n[i].active};setCombos(n);}} style={{width:40,height:22,borderRadius:50,background:c.active?acc:T.card3,position:"relative",cursor:"pointer",transition:"background .2s"}}>
-                  <div style={{position:"absolute",top:2,left:c.active?20:2,width:18,height:18,borderRadius:"50%",background:"#fff",transition:"left .2s"}}/>
-                </div>
-              </div>
+      )}
+
+      <div style={{padding:"10px 14px"}}>
+        {cats.map(([cat,label,icon])=>(
+          <div key={cat} style={{marginBottom:18}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+              <div style={{fontSize:".88rem",fontWeight:800,color:acc}}>{icon} {label} <span style={{fontSize:".66rem",color:T.muted,fontWeight:400}}>({food[cat].length})</span></div>
+              <button onClick={()=>setAddingTo(cat)} style={{padding:"5px 13px",background:`${acc}18`,color:acc,border:`1px solid ${acc}44`,borderRadius:50,fontSize:".66rem",fontWeight:700,cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>+ Add</button>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:6}}>
-              {[["starters","🍢"],["mains","🍛"],["breads","🫓"],["rice","🍚"],["desserts","🍮"]].map(([k,ic])=>(
-                <div key={k} style={{textAlign:"center"}}>
-                  <div style={{fontSize:".7rem",marginBottom:3}}>{ic}</div>
-                  <input type="number" min="0" max="10" value={c[k]} onChange={e=>{const n=[...combos];n[i]={...n[i],[k]:Number(e.target.value)};setCombos(n);}} style={{width:"100%",padding:"5px 2px",border:`1px solid ${T.border}`,borderRadius:7,fontFamily:"'Poppins',sans-serif",fontSize:".82rem",fontWeight:800,color:acc,background:T.card2,outline:"none",textAlign:"center"}}/>
-                  <div style={{fontSize:".55rem",color:T.muted,marginTop:2,textTransform:"capitalize"}}>{k}</div>
+            {food[cat].map(item=>{
+              const restricted=(item.occasions||[]).length>0;
+              return(
+                <div key={item.id} onClick={()=>setEditItem({cat,item:{...item,occasions:item.occasions||[]}})} style={{display:"flex",alignItems:"center",gap:10,background:T.card,borderRadius:14,padding:"10px 12px",marginBottom:7,border:`1px solid ${item.active?T.border:G.red+"33"}`,cursor:"pointer",opacity:item.active?1:.55}}>
+                  <div style={{width:52,height:52,borderRadius:12,overflow:"hidden",flexShrink:0,background:T.card2,border:`1px solid ${T.border}`}}>
+                    {item.img?<img src={item.img} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>e.target.style.display="none"}/>:<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.2rem"}}>🍽️</div>}
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:".8rem",fontWeight:700,color:T.text}}>{item.name}</div>
+                    <div style={{display:"flex",gap:5,marginTop:2,alignItems:"center",flexWrap:"wrap"}}>
+                      <div style={{width:7,height:7,borderRadius:1,background:item.veg?G.green:G.red}}/>
+                      <span style={{fontSize:".62rem",color:T.muted}}>{item.veg?"Veg":"NV"}</span>
+                      {!item.active&&<span style={{fontSize:".58rem",color:G.red,fontWeight:600}}>· Hidden</span>}
+                      {restricted
+                        ?<span style={{fontSize:".58rem",color:acc,fontWeight:600,background:`${acc}18`,padding:"1px 6px",borderRadius:50}}>🎯 {(item.occasions||[]).length} occasions</span>
+                        :<span style={{fontSize:".58rem",color:T.muted}}>· All occasions</span>}
+                    </div>
+                  </div>
+                  <span style={{fontSize:".8rem",color:T.muted}}>✏️</span>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
         ))}
-        <button onClick={()=>setCombos([...combos,{id:"c"+Date.now(),label:"New",starters:2,mains:2,breads:1,rice:1,desserts:1,price:299,active:true}])} style={{width:"100%",padding:"11px",background:T.card2,color:acc,border:`1px solid ${acc}44`,borderRadius:50,fontSize:".8rem",fontWeight:700,cursor:"pointer",fontFamily:"'Poppins',sans-serif",marginBottom:10}}>+ Add Package</button>
-        <button onClick={()=>show("✅ Pricing saved!")} style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",fontWeight:900,cursor:"pointer"}}>Save Pricing ✓</button>
       </div>
     </div>
   );
+}
 
-  // ── OFFERS ───────────────────────────────────────────────────────────────────
-  if(sec==="offers") return(
-    <div style={S}>
-      <Toast/><AdminSHdr T={T} onBack={()=>setSec(null)} title="Offers & Discounts" icon="🎁"/>
-      <div style={{padding:"12px 14px"}}>
-        {offers.map((o,i)=>(
-          <div key={o.id} style={{background:T.card,borderRadius:16,padding:"14px",marginBottom:10,border:`1px solid ${o.active?"#8B5CF644":T.border}`}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
-              <div style={{flex:1,paddingRight:10}}>
-                <input value={o.label} onChange={e=>{const n=[...offers];n[i]={...n[i],label:e.target.value};setOffers(n);}} style={{background:"transparent",border:"none",color:T.text,fontFamily:"'Poppins',sans-serif",fontSize:".84rem",fontWeight:800,outline:"none",width:"100%",marginBottom:3}}/>
-                <input value={o.desc} onChange={e=>{const n=[...offers];n[i]={...n[i],desc:e.target.value};setOffers(n);}} style={{background:"transparent",border:"none",color:T.muted2,fontFamily:"'Poppins',sans-serif",fontSize:".7rem",outline:"none",width:"100%"}}/>
+// ── PRICING ─────────────────────────────────────────────────────────────────
+if(sec==="combos") return(
+  <div style={S}>
+    <Toast/><AdminSHdr T={T} onBack={()=>setSec(null)} title="Pricing & Combinations" icon="💰"/>
+    <div style={{padding:"12px 14px"}}>
+      <div style={{background:T.card,borderRadius:14,padding:"12px 14px",marginBottom:14,border:`1px solid ${T.border}`}}>
+        <div style={{fontSize:".76rem",fontWeight:800,color:T.text,marginBottom:7}}>👥 Max Guests per Booking</div>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <input type="number" value={settings.maxGuests} onChange={e=>setSettings({...settings,maxGuests:Number(e.target.value)})}
+            style={{width:80,padding:"9px",border:`1px solid ${acc}`,borderRadius:10,fontFamily:"'Poppins',sans-serif",fontSize:"1.1rem",fontWeight:900,color:acc,background:T.card2,outline:"none",textAlign:"center"}}/>
+          <div style={{fontSize:".7rem",color:T.muted}}>Max guests per booking</div>
+        </div>
+      </div>
+      <div style={{background:T.card,borderRadius:14,padding:"12px 14px",marginBottom:14,border:`1px solid ${T.border}`}}>
+        <div style={{fontSize:".76rem",fontWeight:800,color:T.text,marginBottom:4}}>GST Settings</div>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{fontSize:".7rem",color:T.muted}}>GST %</div>
+          <input type="number" value={settings.gstPercent||5} onChange={e=>setSettings({...settings,gstPercent:Number(e.target.value)})}
+            style={{width:64,padding:"7px 10px",border:`1px solid ${T.border}`,borderRadius:9,fontFamily:"'Poppins',sans-serif",fontSize:".88rem",fontWeight:900,color:T.text,background:T.card2,outline:"none",textAlign:"center"}}/>
+          <div style={{fontSize:".7rem",color:T.muted}}>GSTIN</div>
+          <input value={settings.gstin||""} onChange={e=>setSettings({...settings,gstin:e.target.value})}
+            style={{flex:1,padding:"7px 10px",border:`1px solid ${T.border}`,borderRadius:9,fontFamily:"'Poppins',sans-serif",fontSize:".78rem",color:T.text,background:T.card2,outline:"none"}}/>
+        </div>
+      </div>
+      {combos.map((c,i)=>(
+        <div key={c.id} style={{background:T.card,borderRadius:18,padding:"14px",marginBottom:12,border:`1px solid ${c.active?acc+"55":T.border}`}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+            <input value={c.label} onChange={e=>{const n=[...combos];n[i]={...n[i],label:e.target.value};setCombos(n);}} style={{background:"transparent",border:"none",color:acc,fontFamily:"'Poppins',sans-serif",fontSize:".9rem",fontWeight:900,outline:"none",width:80}}/>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <div style={{display:"flex",alignItems:"center",gap:3}}>
+                <span style={{fontSize:".7rem",color:T.muted}}>₹</span>
+                <input type="number" value={c.price} onChange={e=>{const n=[...combos];n[i]={...n[i],price:Number(e.target.value)};setCombos(n);}} style={{width:62,padding:"5px 6px",border:`1px solid ${T.border}`,borderRadius:8,fontFamily:"'Poppins',sans-serif",fontSize:".88rem",fontWeight:900,color:T.text,background:T.card2,outline:"none",textAlign:"center"}}/>
+                <span style={{fontSize:".62rem",color:T.muted}}>/pp</span>
               </div>
-              <div style={{display:"flex",alignItems:"center",gap:5}}>
-                <input type="number" min="0" max="50" value={o.discount} onChange={e=>{const n=[...offers];n[i]={...n[i],discount:Number(e.target.value)};setOffers(n);}} style={{width:42,padding:"4px 5px",border:`1px solid ${T.border}`,borderRadius:7,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",fontWeight:900,color:acc,background:T.card2,outline:"none",textAlign:"center"}}/>
-                <span style={{fontSize:".7rem",color:T.muted}}>%</span>
+              <div onClick={()=>{const n=[...combos];n[i]={...n[i],active:!n[i].active};setCombos(n);}} style={{width:40,height:22,borderRadius:50,background:c.active?acc:T.card3,position:"relative",cursor:"pointer",transition:"background .2s"}}>
+                <div style={{position:"absolute",top:2,left:c.active?20:2,width:18,height:18,borderRadius:"50%",background:"#fff",transition:"left .2s"}}/>
               </div>
-            </div>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <div onClick={()=>{const n=[...offers];n[i]={...n[i],active:!n[i].active};setOffers(n);}} style={{display:"flex",alignItems:"center",gap:7,cursor:"pointer"}}>
-                <div style={{width:40,height:22,borderRadius:50,background:o.active?G.purple:T.card3,position:"relative",transition:"background .2s"}}>
-                  <div style={{position:"absolute",top:2,left:o.active?20:2,width:18,height:18,borderRadius:"50%",background:"#fff",transition:"left .2s"}}/>
-                </div>
-                <span style={{fontSize:".72rem",color:o.active?G.purple:T.muted,fontFamily:"'Poppins',sans-serif"}}>{o.active?"Active":"Off"}</span>
-              </div>
-              <button onClick={()=>{setOffers(offers.filter((_,j)=>j!==i));show("Removed");}} style={{background:`${G.red}18`,color:G.red,border:`1px solid ${G.red}33`,padding:"4px 12px",borderRadius:50,fontSize:".63rem",cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Remove</button>
             </div>
           </div>
-        ))}
-        <button onClick={()=>setOffers([...offers,{id:"o"+Date.now(),label:"New Offer",desc:"Description",discount:10,active:true}])} style={{width:"100%",padding:"11px",background:T.card2,color:G.purple,border:`1px solid ${G.purple}44`,borderRadius:50,fontSize:".8rem",fontWeight:700,cursor:"pointer",fontFamily:"'Poppins',sans-serif",marginBottom:10}}>+ Add Offer</button>
-        <button onClick={()=>show("✅ Saved!")} style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",fontWeight:900,cursor:"pointer"}}>Save Offers ✓</button>
-      </div>
-    </div>
-  );
-
-  // ── BUSINESS — standalone component, no hooks-in-if violation ───────────────
-  if(sec==="business") return(
-    <BusinessForm
-      settings={settings} setSettings={setSettings}
-      T={T} acc={acc} G={G} show={show}
-      onBack={()=>setSec(null)}
-    />
-  );
-
-  // ── APPEARANCE ───────────────────────────────────────────────────────────────
-  if(sec==="appearance") return(
-    <div style={S}>
-      <Toast/><AdminSHdr T={T} onBack={()=>setSec(null)} title="Appearance" icon="🎨"/>
-      <div style={{padding:"12px 14px"}}>
-        <div style={{background:T.card,borderRadius:16,padding:"14px",marginBottom:14,border:`1px solid ${T.border}`}}>
-          <div style={{fontSize:".78rem",fontWeight:800,color:T.text,marginBottom:12}}>App Theme</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-            {[["dark","⬛ Dark","#0A0A0A","#F0F0F0"],["light","⬜ Light","#F4F4F4","#111"]].map(([val,lb,bg,fg])=>(
-              <div key={val} onClick={()=>setSettings({...settings,theme:val})} style={{borderRadius:14,padding:"14px",background:bg,border:`2px solid ${settings.theme===val?acc:"transparent"}`,cursor:"pointer",textAlign:"center",boxShadow:settings.theme===val?`0 0 14px ${acc}55`:"0 2px 8px rgba(0,0,0,.15)"}}>
-                <div style={{fontSize:".82rem",fontWeight:700,color:fg,marginBottom:6}}>{lb}</div>
-                <div style={{display:"flex",gap:4,justifyContent:"center"}}>{[acc,G.green,G.red].map(c=><div key={c} style={{width:10,height:10,borderRadius:"50%",background:c}}/>)}</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:6}}>
+            {[["starters","🍢"],["mains","🍛"],["breads","🫓"],["rice","🍚"],["desserts","🍮"]].map(([k,ic])=>(
+              <div key={k} style={{textAlign:"center"}}>
+                <div style={{fontSize:".7rem",marginBottom:3}}>{ic}</div>
+                <input type="number" min="0" max="10" value={c[k]} onChange={e=>{const n=[...combos];n[i]={...n[i],[k]:Number(e.target.value)};setCombos(n);}} style={{width:"100%",padding:"5px 2px",border:`1px solid ${T.border}`,borderRadius:7,fontFamily:"'Poppins',sans-serif",fontSize:".82rem",fontWeight:800,color:acc,background:T.card2,outline:"none",textAlign:"center"}}/>
+                <div style={{fontSize:".55rem",color:T.muted,marginTop:2,textTransform:"capitalize"}}>{k}</div>
               </div>
             ))}
           </div>
         </div>
-        <div style={{background:T.card,borderRadius:16,padding:"14px",marginBottom:14,border:`1px solid ${T.border}`}}>
-          <div style={{fontSize:".78rem",fontWeight:800,color:T.text,marginBottom:12}}>Accent Colour</div>
-          <div style={{display:"flex",gap:9,flexWrap:"wrap",marginBottom:14}}>
-            {["#F0B429","#FF2D7E","#22C55E","#3B82F6","#8B5CF6","#F97316","#EF4444","#06B6D4","#EC4899","#14B8A6"].map(col=>(
-              <div key={col} onClick={()=>setSettings({...settings,accent:col})} style={{width:34,height:34,borderRadius:"50%",background:col,cursor:"pointer",border:`3px solid ${settings.accent===col?"#fff":"transparent"}`,transform:settings.accent===col?"scale(1.2)":"scale(1)",transition:"all .2s",boxShadow:settings.accent===col?`0 0 14px ${col}99`:"none"}}/>
-            ))}
-          </div>
-          <div style={{display:"flex",gap:8,alignItems:"center"}}>
-            <input type="color" value={settings.accent} onChange={e=>setSettings({...settings,accent:e.target.value})} style={{width:40,height:32,borderRadius:8,border:`1px solid ${T.border}`,cursor:"pointer",padding:2}}/>
-            <input value={settings.accent} onChange={e=>setSettings({...settings,accent:e.target.value})} style={{flex:1,padding:"7px 10px",border:`1px solid ${T.border}`,borderRadius:8,fontFamily:"'Poppins',sans-serif",fontSize:".8rem",color:T.text,background:T.card2,outline:"none"}}/>
-          </div>
-        </div>
-        {/* Preview */}
-        <div style={{background:T.card,borderRadius:16,padding:"14px",marginBottom:14,border:`1px solid ${T.border}`}}>
-          <div style={{fontSize:".76rem",fontWeight:800,color:T.text,marginBottom:10}}>Preview</div>
-          <div style={{display:"flex",gap:8,alignItems:"center",background:T.bg,borderRadius:12,padding:"12px"}}>
-            <div style={{width:42,height:42,borderRadius:"50%",background:`linear-gradient(135deg,${acc},${G.goldd})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.2rem"}}>👩‍🍳</div>
-            <div><div style={{fontSize:".95rem",fontWeight:900,color:T.text}}>Mrs <span style={{color:acc}}>Chef</span></div><div style={{fontSize:".6rem",color:T.muted}}>Home Kitchen</div></div>
-            <button style={{marginLeft:"auto",padding:"7px 14px",background:`linear-gradient(135deg,${acc},${G.goldd})`,border:"none",borderRadius:50,fontSize:".7rem",fontWeight:800,color:"#000",cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Book Now</button>
-          </div>
-        </div>
-        <button onClick={()=>show("✅ Saved!")} style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",fontWeight:900,cursor:"pointer"}}>Save ✓</button>
-      </div>
+      ))}
+      <button onClick={()=>setCombos([...combos,{id:"c"+Date.now(),label:"New",starters:2,mains:2,breads:1,rice:1,desserts:1,price:299,active:true}])} style={{width:"100%",padding:"11px",background:T.card2,color:acc,border:`1px solid ${acc}44`,borderRadius:50,fontSize:".8rem",fontWeight:700,cursor:"pointer",fontFamily:"'Poppins',sans-serif",marginBottom:10}}>+ Add Package</button>
+      <button onClick={()=>show("✅ Pricing saved!")} style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",fontWeight:900,cursor:"pointer"}}>Save Pricing ✓</button>
     </div>
-  );
+  </div>
+);
 
-  // ── PASSWORD ─────────────────────────────────────────────────────────────────
-  if(sec==="password") return(
-    <div style={S}>
+// ── OFFERS ───────────────────────────────────────────────────────────────────
+if(sec==="offers") return(
+  <div style={S}>
+    <Toast/><AdminSHdr T={T} onBack={()=>setSec(null)} title="Offers & Discounts" icon="🎁"/>
+    <div style={{padding:"12px 14px"}}>
+      {offers.map((o,i)=>(
+        <div key={o.id} style={{background:T.card,borderRadius:16,padding:"14px",marginBottom:10,border:`1px solid ${o.active?"#8B5CF644":T.border}`}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+            <div style={{flex:1,paddingRight:10}}>
+              <input value={o.label} onChange={e=>{const n=[...offers];n[i]={...n[i],label:e.target.value};setOffers(n);}} style={{background:"transparent",border:"none",color:T.text,fontFamily:"'Poppins',sans-serif",fontSize:".84rem",fontWeight:800,outline:"none",width:"100%",marginBottom:3}}/>
+              <input value={o.desc} onChange={e=>{const n=[...offers];n[i]={...n[i],desc:e.target.value};setOffers(n);}} style={{background:"transparent",border:"none",color:T.muted2,fontFamily:"'Poppins',sans-serif",fontSize:".7rem",outline:"none",width:"100%"}}/>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:5}}>
+              <input type="number" min="0" max="50" value={o.discount} onChange={e=>{const n=[...offers];n[i]={...n[i],discount:Number(e.target.value)};setOffers(n);}} style={{width:42,padding:"4px 5px",border:`1px solid ${T.border}`,borderRadius:7,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",fontWeight:900,color:acc,background:T.card2,outline:"none",textAlign:"center"}}/>
+              <span style={{fontSize:".7rem",color:T.muted}}>%</span>
+            </div>
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div onClick={()=>{const n=[...offers];n[i]={...n[i],active:!n[i].active};setOffers(n);}} style={{display:"flex",alignItems:"center",gap:7,cursor:"pointer"}}>
+              <div style={{width:40,height:22,borderRadius:50,background:o.active?G.purple:T.card3,position:"relative",transition:"background .2s"}}>
+                <div style={{position:"absolute",top:2,left:o.active?20:2,width:18,height:18,borderRadius:"50%",background:"#fff",transition:"left .2s"}}/>
+              </div>
+              <span style={{fontSize:".72rem",color:o.active?G.purple:T.muted,fontFamily:"'Poppins',sans-serif"}}>{o.active?"Active":"Off"}</span>
+            </div>
+            <button onClick={()=>{setOffers(offers.filter((_,j)=>j!==i));show("Removed");}} style={{background:`${G.red}18`,color:G.red,border:`1px solid ${G.red}33`,padding:"4px 12px",borderRadius:50,fontSize:".63rem",cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Remove</button>
+          </div>
+        </div>
+      ))}
+      <button onClick={()=>setOffers([...offers,{id:"o"+Date.now(),label:"New Offer",desc:"Description",discount:10,active:true}])} style={{width:"100%",padding:"11px",background:T.card2,color:G.purple,border:`1px solid ${G.purple}44`,borderRadius:50,fontSize:".8rem",fontWeight:700,cursor:"pointer",fontFamily:"'Poppins',sans-serif",marginBottom:10}}>+ Add Offer</button>
+      <button onClick={()=>show("✅ Saved!")} style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",fontWeight:900,cursor:"pointer"}}>Save Offers ✓</button>
+    </div>
+  </div>
+);
+
+// ── BUSINESS — standalone component, no hooks-in-if violation ───────────────
+if(sec==="business") return(
+  <BusinessForm
+    settings={settings} setSettings={setSettings}
+    T={T} acc={acc} G={G} show={show}
+    onBack={()=>setSec(null)}
+  />
+);
+
+// ── APPEARANCE ───────────────────────────────────────────────────────────────
+if(sec==="appearance") return(
+  <div style={S}>
+    <Toast/><AdminSHdr T={T} onBack={()=>setSec(null)} title="Appearance" icon="🎨"/>
+    <div style={{padding:"12px 14px"}}>
+      <div style={{background:T.card,borderRadius:16,padding:"14px",marginBottom:14,border:`1px solid ${T.border}`}}>
+        <div style={{fontSize:".78rem",fontWeight:800,color:T.text,marginBottom:12}}>App Theme</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          {[["dark","⬛ Dark","#0A0A0A","#F0F0F0"],["light","⬜ Light","#F4F4F4","#111"]].map(([val,lb,bg,fg])=>(
+            <div key={val} onClick={()=>setSettings({...settings,theme:val})} style={{borderRadius:14,padding:"14px",background:bg,border:`2px solid ${settings.theme===val?acc:"transparent"}`,cursor:"pointer",textAlign:"center",boxShadow:settings.theme===val?`0 0 14px ${acc}55`:"0 2px 8px rgba(0,0,0,.15)"}}>
+              <div style={{fontSize:".82rem",fontWeight:700,color:fg,marginBottom:6}}>{lb}</div>
+              <div style={{display:"flex",gap:4,justifyContent:"center"}}>{[acc,G.green,G.red].map(c=><div key={c} style={{width:10,height:10,borderRadius:"50%",background:c}}/>)}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:T.card,borderRadius:16,padding:"14px",marginBottom:14,border:`1px solid ${T.border}`}}>
+        <div style={{fontSize:".78rem",fontWeight:800,color:T.text,marginBottom:12}}>Accent Colour</div>
+        <div style={{display:"flex",gap:9,flexWrap:"wrap",marginBottom:14}}>
+          {["#F0B429","#FF2D7E","#22C55E","#3B82F6","#8B5CF6","#F97316","#EF4444","#06B6D4","#EC4899","#14B8A6"].map(col=>(
+            <div key={col} onClick={()=>setSettings({...settings,accent:col})} style={{width:34,height:34,borderRadius:"50%",background:col,cursor:"pointer",border:`3px solid ${settings.accent===col?"#fff":"transparent"}`,transform:settings.accent===col?"scale(1.2)":"scale(1)",transition:"all .2s",boxShadow:settings.accent===col?`0 0 14px ${col}99`:"none"}}/>
+          ))}
+        </div>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <input type="color" value={settings.accent} onChange={e=>setSettings({...settings,accent:e.target.value})} style={{width:40,height:32,borderRadius:8,border:`1px solid ${T.border}`,cursor:"pointer",padding:2}}/>
+          <input value={settings.accent} onChange={e=>setSettings({...settings,accent:e.target.value})} style={{flex:1,padding:"7px 10px",border:`1px solid ${T.border}`,borderRadius:8,fontFamily:"'Poppins',sans-serif",fontSize:".8rem",color:T.text,background:T.card2,outline:"none"}}/>
+        </div>
+      </div>
+      {/* Preview */}
+      <div style={{background:T.card,borderRadius:16,padding:"14px",marginBottom:14,border:`1px solid ${T.border}`}}>
+        <div style={{fontSize:".76rem",fontWeight:800,color:T.text,marginBottom:10}}>Preview</div>
+        <div style={{display:"flex",gap:8,alignItems:"center",background:T.bg,borderRadius:12,padding:"12px"}}>
+          <div style={{width:42,height:42,borderRadius:"50%",background:`linear-gradient(135deg,${acc},${G.goldd})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.2rem"}}>👩‍🍳</div>
+          <div><div style={{fontSize:".95rem",fontWeight:900,color:T.text}}>Mrs <span style={{color:acc}}>Chef</span></div><div style={{fontSize:".6rem",color:T.muted}}>Home Kitchen</div></div>
+          <button style={{marginLeft:"auto",padding:"7px 14px",background:`linear-gradient(135deg,${acc},${G.goldd})`,border:"none",borderRadius:50,fontSize:".7rem",fontWeight:800,color:"#000",cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Book Now</button>
+        </div>
+      </div>
+      <button onClick={()=>show("✅ Saved!")} style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",fontWeight:900,cursor:"pointer"}}>Save ✓</button>
+    </div>
+  </div>
+);
+
+// ── PASSWORD ─────────────────────────────────────────────────────────────────
+if(sec==="password") return(
+  <div style={S}>
       <AdminSHdr T={T} onBack={()=>setSec(null)} title="Change Password" icon="🔐"/>
       <div style={{padding:"14px"}}>
         <div style={{background:T.card,borderRadius:18,padding:"18px",border:`1px solid ${T.border}`}}>
@@ -1510,257 +1764,257 @@ export default function App(){
         <button onClick={()=>setAdminOpen(true)} style={{flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"5px 9px",borderRadius:10,background:"transparent",border:"1px solid transparent",cursor:"pointer"}}>
           <span style={{fontSize:".9rem"}}>🔩</span>
           <span style={{fontSize:".52rem",fontWeight:500,color:T.muted}}>Settings</span>
-        </button>
-      </div>
+      </button>
     </div>
-  );
+  </div>
+);
 
-  // ── CHEF BOX PICKER (5 items mandatory) ──────────────────────────────────
-  if(screen==="builder" && entry?.id==="box"){
-    const allFoodItems = [...(food.starters||[]),...(food.mains||[]),...(food.breads||[]),...(food.rice||[]),...(food.desserts||[])].filter(i=>i.active!==false);
-    const filteredBox  = filterFood(allFoodItems);
-    const toggleBox    = (item)=>{
-      const ex=chefBoxSel.find(i=>i.id===item.id);
-      if(ex) setChefBoxSel(chefBoxSel.filter(i=>i.id!==item.id));
-      else if(chefBoxSel.length<5) setChefBoxSel([...chefBoxSel,item]);
-    };
-    const canConfirm   = chefBoxSel.length===5 && date && pax>=1;
-    return(
-      <div style={{...W,paddingBottom:20}}>
-        <style>{css}</style>
-        <GlowBg color={acc}/>
-        <div style={{position:"relative",zIndex:1}}>
-          {/* Header */}
-          <div style={{display:"flex",alignItems:"center",gap:9,padding:"14px 14px 10px"}}>
-            <button onClick={()=>{setScreen("home");setChefBoxSel([]);}} style={{background:T.card,border:`1px solid ${T.border}`,color:T.text,width:33,height:33,borderRadius:"50%",cursor:"pointer",fontSize:".82rem",flexShrink:0}}>←</button>
-            <div style={{flex:1}}><div style={{fontSize:".54rem",color:T.muted,textTransform:"uppercase"}}>Build Your Order</div><div style={{fontSize:".9rem",fontWeight:900,color:T.text}}>📦 Chef Box</div></div>
-            <Logo size={34} accent={acc} src={settings.logoImg||"/logo.jpg"}/>
-          </div>
-          {/* Progress pill */}
-          <div style={{margin:"0 14px 12px"}}>
-            <div style={{background:T.card2,borderRadius:14,padding:"10px 14px",border:`1px solid ${chefBoxSel.length===5?acc+"55":T.border}`}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                <div style={{fontSize:".72rem",fontWeight:800,color:chefBoxSel.length===5?acc:T.text}}>{chefBoxSel.length}/5 items selected {chefBoxSel.length===5?"✓":""}</div>                <div style={{fontSize:".68rem",color:T.muted}}>Exactly 5 required</div>
-              </div>
-              <div style={{display:"flex",gap:6}}>
-                {Array.from({length:5},(_,i)=>(
-                  <div key={i} style={{flex:1,height:5,borderRadius:50,background:i<chefBoxSel.length?acc:T.card3,transition:"background .2s"}}/>
-                ))}
-              </div>
-            </div>
-          </div>
-          {/* Date + Pax quick row */}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,margin:"0 14px 12px"}}>
-            <div>
-              <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:4,textTransform:"uppercase"}}>Event Date *</div>
-              <input type="date" value={date} onChange={e=>{setDate(e.target.value);setDateErr(false);}} style={{width:"100%",padding:"9px 11px",border:`1.5px solid ${date?acc+"55":T.border}`,borderRadius:10,fontFamily:"'Poppins',sans-serif",fontSize:".82rem",color:date?T.text:T.muted,background:T.card2,outline:"none"}}/>
-            </div>
-            <div>
-              <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:4,textTransform:"uppercase"}}>Guests</div>
-              <div style={{display:"flex",alignItems:"center",gap:6}}>
-                <button onClick={()=>setPax(p=>Math.max(1,p-1))} style={{width:30,height:34,background:T.card2,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontSize:"1rem",cursor:"pointer"}}>−</button>
-                <div style={{flex:1,textAlign:"center",fontSize:".9rem",fontWeight:800,color:acc}}>{pax}</div>
-                <button onClick={()=>setPax(p=>Math.min(settings.maxGuests,p+1))} style={{width:30,height:34,background:T.card2,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontSize:"1rem",cursor:"pointer"}}>+</button>
-              </div>
-            </div>
-          </div>
-          {/* Selected chips */}
-          {chefBoxSel.length>0&&<div style={{display:"flex",gap:5,overflowX:"auto",padding:"0 14px 9px"}}>
-            {chefBoxSel.map(item=>(
-              <div key={item.id} onClick={()=>toggleBox(item)} style={{flexShrink:0,display:"flex",alignItems:"center",gap:4,background:`${acc}18`,border:`1px solid ${acc}44`,borderRadius:50,padding:"3px 9px 3px 4px",cursor:"pointer"}}>
-                <img src={item.img} alt="" style={{width:16,height:16,borderRadius:"50%",objectFit:"cover"}} onError={e=>e.target.style.display="none"}/>
-                <span style={{fontSize:".62rem",fontWeight:700,color:acc,whiteSpace:"nowrap"}}>{item.name}</span>
-                <span style={{fontSize:".55rem",color:T.muted}}>✕</span>
-              </div>
-            ))}
-          </div>}
-          {/* All dishes grid */}
-          <div style={{padding:"0 14px",display:"flex",gap:9,flexWrap:"wrap",justifyContent:"space-between"}}>
-            {filteredBox.map(item=>{
-              const on=!!chefBoxSel.find(i=>i.id===item.id);
-              const maxed=!on&&chefBoxSel.length>=5;
-              return(
-                <div key={item.id} onClick={()=>!maxed&&toggleBox(item)} style={{width:"47%",borderRadius:14,overflow:"hidden",cursor:maxed?"not-allowed":"pointer",border:`2px solid ${on?acc:"transparent"}`,background:T.card2,opacity:maxed?.45:1,transform:on?"scale(1.02)":"scale(1)",transition:"all .18s",marginBottom:3}}>
-                  <div style={{position:"relative",height:84}}>
-                    <img src={item.img} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} onError={e=>e.target.src="https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=300"}/>
-                    <div style={{position:"absolute",top:5,left:5,width:8,height:8,borderRadius:2,background:item.veg?"#22C55E":"#EF4444"}}/>
-                    {on&&<div style={{position:"absolute",top:5,right:5,width:20,height:20,borderRadius:"50%",background:acc,display:"flex",alignItems:"center",justifyContent:"center",fontSize:".6rem",fontWeight:900,color:"#000"}}>✓</div>}
-                  </div>
-                  <div style={{padding:"7px 9px 9px",fontSize:".7rem",fontWeight:700,color:T.text,lineHeight:1.2}}>{item.name}</div>
-                </div>
-              );
-            })}
-          </div>
-          {/* Confirm button */}
-          <div style={{padding:"12px 14px 0"}}>
-            {!canConfirm&&<div style={{textAlign:"center",fontSize:".65rem",color:T.muted,marginBottom:7}}>{chefBoxSel.length<5?`Select ${5-chefBoxSel.length} more item${5-chefBoxSel.length!==1?"s":""}`:!date?"Please select event date":""}</div>}
-            <button onClick={()=>{if(canConfirm){setSel({starters:chefBoxSel,mains:[],breads:[],rice:[],desserts:[],condiments:[]});setScreen("confirm");}}} style={{width:"100%",padding:"13px",background:canConfirm?`linear-gradient(135deg,${acc},${G.goldd})`:"#1A1A1A",color:canConfirm?"#000":T.muted,border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",fontWeight:900,cursor:canConfirm?"pointer":"not-allowed",transition:"all .2s"}}>
-              {canConfirm?"Review My Box →":"Select exactly 5 items"}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ── BUILDER ───────────────────────────────────────────────────────────────
-  if(screen==="builder"){
-    const cur=BUILDER_STEPS[step];
-    const curDishes=cur.key==="condiments"?condiments.filter(i=>i.active!==false):filterFood(food[cur.key]||[]);
-    const curSel=sel[cur.key]||[];
-    const goNext=()=>{
-      if(cur.key==="start"){if(!date){setDateErr(true);return;}setDateErr(false);}
-      if(step<BUILDER_STEPS.length-1) setStep(s=>s+1);
-      else setScreen("confirm");
-    };
-    return(
-      <div style={{...W,height:"100vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
-        <style>{css}</style>
-        <GlowBg color={acc}/>
-        <div style={{position:"relative",zIndex:1,flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-          <div style={{display:"flex",alignItems:"center",gap:9,padding:"12px 14px 8px",flexShrink:0}}>
-            <button onClick={()=>setScreen("home")} style={{background:T.card,border:`1px solid ${T.border}`,color:T.text,width:33,height:33,borderRadius:"50%",cursor:"pointer",fontSize:".82rem",flexShrink:0}}>←</button>
-            <div style={{flex:1}}><div style={{fontSize:".54rem",color:T.muted,textTransform:"uppercase",letterSpacing:".08em"}}>Build Your Menu</div><div style={{fontSize:".9rem",fontWeight:900,color:T.text}}>{cur.emoji} {cur.label}</div></div>
-            {allReady&&<button onClick={()=>setScreen("confirm")} style={{flexShrink:0,padding:"6px 12px",borderRadius:50,background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",fontSize:".65rem",fontWeight:900,cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Review →</button>}
-            <Logo size={34} accent={acc}/>
-          </div>
-
-          {/* ── LIVE PRICE BAR ── */}
-          {(cur.key!=="start")&&(()=>{
-            const {tier,ppRate,total}=calcPrice(sel,pax);
-            return(
-              <div style={{padding:"0 14px 6px",flexShrink:0}}>
-                <div style={{background:T.card2,borderRadius:12,padding:"8px 13px",border:`1px solid ${acc}33`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                  <div>
-                    <div style={{fontSize:".58rem",color:T.muted}}>{tier} Package</div>
-                    <div style={{fontSize:".7rem",fontWeight:800,color:acc}}>₹{ppRate}/pp × {pax} guests</div>
-                  </div>
-                  <div style={{textAlign:"right"}}>
-                    <div style={{fontSize:".58rem",color:T.muted}}>Est. Total</div>
-                    <div style={{fontSize:".9rem",fontWeight:900,color:acc}}>₹{total.toLocaleString()}</div>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
-          {cur.key==="start"&&(
-            <div style={{flex:1,overflowY:"auto",padding:"0 14px 8px"}}>
-              {occasion?.vegOnly&&<div style={{background:"linear-gradient(135deg,#4C1D95,#7C3AED)",borderRadius:14,padding:"11px 13px",marginBottom:12,display:"flex",alignItems:"center",gap:10}}>
-                <span style={{fontSize:"1.4rem"}}>🕉️</span>
-                <div><div style={{fontSize:".74rem",fontWeight:800,color:"#fff"}}>Satvik Mode Active</div><div style={{fontSize:".6rem",color:"rgba(255,255,255,.65)"}}>Menu filtered for this occasion</div></div>
-              </div>}
-              <div style={{fontSize:".64rem",fontWeight:700,color:T.muted,textTransform:"uppercase",marginBottom:7}}>Occasion *</div>
-              <div style={{display:"flex",gap:7,overflowX:"auto",marginBottom:13,paddingBottom:2}}>
-                {OCCASIONS.map(o=>(
-                  <div key={o.id} onClick={()=>setOccasion(o)} style={{flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",gap:4,cursor:"pointer"}}>
-                    <div style={{width:50,height:50,borderRadius:14,background:occasion?.id===o.id?`${acc}22`:T.card2,border:`2px solid ${occasion?.id===o.id?acc:T.border}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.3rem",transition:"all .2s",boxShadow:occasion?.id===o.id?`0 0 12px ${acc}44`:"none"}}>{o.emoji}</div>
-                    <div style={{fontSize:".57rem",fontWeight:occasion?.id===o.id?700:500,color:occasion?.id===o.id?acc:T.muted,textAlign:"center",whiteSpace:"nowrap"}}>{o.label}</div>
-                  </div>
-                ))}
-              </div>
-              <div style={{marginBottom:12}}>
-                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
-                  <div style={{fontSize:".64rem",fontWeight:700,color:T.muted,textTransform:"uppercase"}}>Event Date <span style={{color:G.red}}>*</span></div>
-                  {dateErr&&<div style={{fontSize:".6rem",color:G.red,fontWeight:600}}>⚠️ Required</div>}
-                </div>
-                <input type="date" value={date} onChange={e=>{setDate(e.target.value);setDateErr(false);}} style={{width:"100%",padding:"11px 13px",border:`1.5px solid ${dateErr?G.red:date?acc+"55":T.border}`,borderRadius:12,fontFamily:"'Poppins',sans-serif",fontSize:".88rem",color:date?T.text:T.muted,background:T.card2,outline:"none",transition:"border-color .2s"}}/>
-              </div>
-              {/* PAX */}
-              <div style={{marginBottom:12}}>
-                <div style={{fontSize:".64rem",fontWeight:700,color:T.muted,textTransform:"uppercase",marginBottom:8}}>Number of Guests *</div>
-                <div style={{background:T.card2,borderRadius:18,padding:"16px 14px",border:`1px solid ${T.border}`,display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
-                  <div style={{position:"relative",width:100,height:100}}>
-                    <svg width="100" height="100" style={{position:"absolute",top:0,left:0}}>
-                      <circle cx="50" cy="50" r="44" fill="none" stroke={T.card3} strokeWidth="6"/>
-                      <circle cx="50" cy="50" r="44" fill="none" stroke={acc} strokeWidth="6" strokeDasharray={`${((pax-1)/(settings.maxGuests-1))*277} 277`} strokeLinecap="round" transform="rotate(-90 50 50)" style={{transition:"stroke-dasharray .3s"}}/>
-                    </svg>
-                    <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-                      <div style={{fontSize:"1.9rem",fontWeight:900,color:acc,lineHeight:1}}>{pax}</div>
-                      <div style={{fontSize:".55rem",color:T.muted}}>guests</div>
-                    </div>
-                  </div>
-                  <div style={{display:"flex",alignItems:"center",gap:10}}>
-                    <button onClick={()=>setPax(p=>Math.max(1,p-1))} style={{width:36,height:36,borderRadius:"50%",background:T.card3,border:`1px solid ${T.border}`,color:T.text,fontSize:"1.2rem",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>−</button>
-                    <div style={{display:"flex",gap:5,flexWrap:"wrap",justifyContent:"center"}}>
-                      {[5,10,15,20,25,30,settings.maxGuests].filter((v,i,a)=>a.indexOf(v)===i).map(n=>(
-                        <button key={n} onClick={()=>setPax(n)} style={{padding:"4px 8px",borderRadius:8,border:`1px solid ${pax===n?acc:T.border}`,background:pax===n?`${acc}22`:"transparent",color:pax===n?acc:T.muted2,fontSize:".62rem",fontWeight:700,cursor:"pointer",fontFamily:"'Poppins',sans-serif",transition:"all .15s"}}>{n}</button>
-                      ))}
-                    </div>
-                    <button onClick={()=>setPax(p=>Math.min(settings.maxGuests,p+1))} style={{width:36,height:36,borderRadius:"50%",background:T.card3,border:`1px solid ${T.border}`,color:T.text,fontSize:"1.2rem",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>+</button>
-                  </div>
-                  <input type="range" min="1" max={settings.maxGuests} value={pax} onChange={e=>setPax(Number(e.target.value))} style={{width:"100%",accentColor:acc,height:3,cursor:"pointer"}}/>
-                </div>
-              </div>
-              <div style={{fontSize:".64rem",fontWeight:700,color:T.muted,textTransform:"uppercase",marginBottom:7}}>Diet Preference</div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
-                {[["veg","🟢","Veg Only","Pure vegetarian"],["nonveg","🔴","Non-Veg","Meat included"],["both","🟡","Mixed","Veg + Non-Veg"],["satvik","🕉️","Satvik","No onion/garlic"]].map(([val,ic,lb,sub])=>(
-                  <button key={val} onClick={()=>setDiet(val)} disabled={occasion?.vegOnly&&val!=="veg"&&val!=="satvik"}
-                    style={{padding:"10px 8px",borderRadius:12,border:`1.5px solid ${diet===val?acc:T.border}`,background:diet===val?`${acc}18`:"transparent",cursor:occasion?.vegOnly&&val!=="veg"&&val!=="satvik"?"not-allowed":"pointer",opacity:occasion?.vegOnly&&val!=="veg"&&val!=="satvik"?.3:1,textAlign:"left",transition:"all .15s",fontFamily:"'Poppins',sans-serif"}}>
-                    <div style={{fontSize:".78rem",fontWeight:700,color:diet===val?acc:T.text,marginBottom:2}}>{ic} {lb}</div>
-                    <div style={{fontSize:".58rem",color:T.muted}}>{sub}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {cur.key!=="start"&&(
-            <div style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column"}}>
-              <div style={{padding:"0 14px 5px",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                <div>
-                  <div style={{fontSize:".62rem",color:T.muted}}>{curSel.length>0?`${curSel.length} selected`:"Tap a dish to add"}</div>
-                  {occasion&&<div style={{fontSize:".57rem",color:acc,marginTop:1}}>🎯 Filtered for {occasion?.label}</div>}
-                </div>
-                {(cur.key!=="mains")&&<button onClick={()=>setStep(s=>Math.min(BUILDER_STEPS.length-1,s+1))} style={{background:"transparent",border:`1px solid ${T.border}`,color:T.muted,padding:"4px 10px",borderRadius:50,fontSize:".6rem",cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Skip →</button>}
-              </div>
-              {curSel.length>0&&(
-                <div style={{padding:"0 14px 5px",flexShrink:0,display:"flex",gap:4,overflowX:"auto"}}>
-                  {curSel.map(item=>(
-                    <div key={item.id} onClick={()=>toggleSel(cur.key,item)} style={{flexShrink:0,display:"flex",alignItems:"center",gap:3,background:`${acc}18`,border:`1px solid ${acc}44`,borderRadius:50,padding:"2px 8px 2px 3px",cursor:"pointer"}}>
-                      <img src={item.img} alt="" style={{width:13,height:13,borderRadius:"50%",objectFit:"cover"}}/>
-                      <span style={{fontSize:".57rem",fontWeight:700,color:acc,whiteSpace:"nowrap"}}>{item.name}</span>
-                      <span style={{fontSize:".52rem",color:T.muted}}>✕</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div style={{flex:1,display:"flex",gap:10,overflowX:"auto",padding:"0 14px",alignItems:"center"}}>
-                {curDishes.length===0
-                  ?<div style={{textAlign:"center",width:"100%",color:T.muted}}><div style={{fontSize:"2rem",marginBottom:6}}>🍽️</div><div style={{fontSize:".75rem"}}>No dishes for this occasion/diet</div><div style={{fontSize:".62rem",marginTop:3}}>Go back to "Let's Start" to adjust</div></div>
-                  :curDishes.map(item=><DishCard key={item.id} item={item} selected={curSel} onToggle={i=>toggleSel(cur.key,i)} accent={acc}/>)}
-              </div>
-            </div>
-          )}
-
-          <div style={{padding:"6px 14px 5px",flexShrink:0}}>
-            <button onClick={goNext} style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".84rem",fontWeight:900,cursor:"pointer",boxShadow:`0 4px 16px ${acc}33`}}>
-              {step<BUILDER_STEPS.length-1?`Next: ${BUILDER_STEPS[step+1].label} →`:"Review My Menu →"}
-            </button>
-          </div>
-          <div style={{flexShrink:0,background:`linear-gradient(180deg,transparent,${T.card} 30%)`,paddingTop:2}}>
-            <div style={{textAlign:"center",paddingTop:6}}><div style={{fontSize:".52rem",color:T.muted,fontWeight:500,letterSpacing:".1em",textTransform:"uppercase"}}>← Tap to switch course →</div></div>
-            <SemiPieWheel items={BUILDER_STEPS} activeIdx={step} onSelect={setStep} accent={acc} completed={completed}/>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ── CONFIRM ───────────────────────────────────────────────────────────────
-  if(screen==="confirm") return(
-    <div style={{...W,paddingBottom:40}}>
+// ── CHEF BOX PICKER (5 items mandatory) ──────────────────────────────────
+if(screen==="builder" && entry?.id==="box"){
+  const allFoodItems = [...(food.starters||[]),...(food.mains||[]),...(food.breads||[]),...(food.rice||[]),...(food.desserts||[])].filter(i=>i.active!==false);
+  const filteredBox  = filterFood(allFoodItems);
+  const toggleBox    = (item)=>{
+    const ex=chefBoxSel.find(i=>i.id===item.id);
+    if(ex) setChefBoxSel(chefBoxSel.filter(i=>i.id!==item.id));
+    else if(chefBoxSel.length<5) setChefBoxSel([...chefBoxSel,item]);
+  };
+  const canConfirm   = chefBoxSel.length===5 && date && pax>=1;
+  return(
+    <div style={{...W,paddingBottom:20}}>
       <style>{css}</style>
       <GlowBg color={acc}/>
       <div style={{position:"relative",zIndex:1}}>
-        {sent?(
-          <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"0 28px",textAlign:"center"}}>
-            <div style={{fontSize:"3.2rem",marginBottom:4,animation:"bounce 1.2s ease infinite"}}>🎉</div>
-            <div style={{width:72,height:72,borderRadius:"50%",background:`${acc}18`,border:`2px solid ${acc}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"2rem",marginBottom:14}}>✅</div>
-            <div style={{fontSize:"1.35rem",fontWeight:900,marginBottom:5,color:T.text}}>Order <span style={{color:acc}}>Sent!</span></div>
-            <div style={{fontSize:".8rem",color:T.muted2,lineHeight:1.7,marginBottom:16}}>Your custom menu has been sent. We confirm within 2 hours.</div>
-            <a href={`https://wa.me/${settings.whatsapp.replace(/\D/g,"")}?text=${encodeURIComponent("Hi")}`} target="_blank" rel="noreferrer" style={{background:"linear-gradient(135deg,#16A34A,#15803D)",color:"#fff",padding:"12px",borderRadius:50,fontSize:".86rem",fontWeight:900,textDecoration:"none",display:"block",width:"100%",textAlign:"center",marginBottom:9}}>💬 Open WhatsApp</a>
-            <button onClick={()=>{setSent(false);setSel({starters:[],mains:[],breads:[],rice:[],desserts:[]});setStep(0);setOccasion(null);setDate("");setScreen("home");}} style={{background:"transparent",color:T.muted,border:`1px solid ${T.border}`,padding:"10px",borderRadius:50,fontSize:".78rem",cursor:"pointer",fontFamily:"'Poppins',sans-serif",width:"100%"}}>Plan Another</button>
+        {/* Header */}
+        <div style={{display:"flex",alignItems:"center",gap:9,padding:"14px 14px 10px"}}>
+          <button onClick={()=>{setScreen("home");setChefBoxSel([]);}} style={{background:T.card,border:`1px solid ${T.border}`,color:T.text,width:33,height:33,borderRadius:"50%",cursor:"pointer",fontSize:".82rem",flexShrink:0}}>←</button>
+          <div style={{flex:1}}><div style={{fontSize:".54rem",color:T.muted,textTransform:"uppercase"}}>Build Your Order</div><div style={{fontSize:".9rem",fontWeight:900,color:T.text}}>📦 Chef Box</div></div>
+          <Logo size={34} accent={acc} src={settings.logoImg||"/logo.jpg"}/>
+        </div>
+        {/* Progress pill */}
+        <div style={{margin:"0 14px 12px"}}>
+          <div style={{background:T.card2,borderRadius:14,padding:"10px 14px",border:`1px solid ${chefBoxSel.length===5?acc+"55":T.border}`}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+              <div style={{fontSize:".72rem",fontWeight:800,color:chefBoxSel.length===5?acc:T.text}}>{chefBoxSel.length}/5 items selected {chefBoxSel.length===5?"✓":""}</div>                <div style={{fontSize:".68rem",color:T.muted}}>Exactly 5 required</div>
+            </div>
+            <div style={{display:"flex",gap:6}}>
+              {Array.from({length:5},(_,i)=>(
+                <div key={i} style={{flex:1,height:5,borderRadius:50,background:i<chefBoxSel.length?acc:T.card3,transition:"background .2s"}}/>
+              ))}
+            </div>
           </div>
+        </div>
+        {/* Date + Pax quick row */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,margin:"0 14px 12px"}}>
+          <div>
+            <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:4,textTransform:"uppercase"}}>Event Date *</div>
+            <input type="date" value={date} onChange={e=>{setDate(e.target.value);setDateErr(false);}} style={{width:"100%",padding:"9px 11px",border:`1.5px solid ${date?acc+"55":T.border}`,borderRadius:10,fontFamily:"'Poppins',sans-serif",fontSize:".82rem",color:date?T.text:T.muted,background:T.card2,outline:"none"}}/>
+          </div>
+          <div>
+            <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:4,textTransform:"uppercase"}}>Guests</div>
+            <div style={{display:"flex",alignItems:"center",gap:6}}>
+              <button onClick={()=>setPax(p=>Math.max(1,p-1))} style={{width:30,height:34,background:T.card2,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontSize:"1rem",cursor:"pointer"}}>−</button>
+              <div style={{flex:1,textAlign:"center",fontSize:".9rem",fontWeight:800,color:acc}}>{pax}</div>
+              <button onClick={()=>setPax(p=>Math.min(settings.maxGuests,p+1))} style={{width:30,height:34,background:T.card2,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontSize:"1rem",cursor:"pointer"}}>+</button>
+            </div>
+          </div>
+        </div>
+        {/* Selected chips */}
+        {chefBoxSel.length>0&&<div style={{display:"flex",gap:5,overflowX:"auto",padding:"0 14px 9px"}}>
+          {chefBoxSel.map(item=>(
+            <div key={item.id} onClick={()=>toggleBox(item)} style={{flexShrink:0,display:"flex",alignItems:"center",gap:4,background:`${acc}18`,border:`1px solid ${acc}44`,borderRadius:50,padding:"3px 9px 3px 4px",cursor:"pointer"}}>
+              <img src={item.img} alt="" style={{width:16,height:16,borderRadius:"50%",objectFit:"cover"}} onError={e=>e.target.style.display="none"}/>
+              <span style={{fontSize:".62rem",fontWeight:700,color:acc,whiteSpace:"nowrap"}}>{item.name}</span>
+              <span style={{fontSize:".55rem",color:T.muted}}>✕</span>
+            </div>
+          ))}
+        </div>}
+        {/* All dishes grid */}
+        <div style={{padding:"0 14px",display:"flex",gap:9,flexWrap:"wrap",justifyContent:"space-between"}}>
+          {filteredBox.map(item=>{
+            const on=!!chefBoxSel.find(i=>i.id===item.id);
+            const maxed=!on&&chefBoxSel.length>=5;
+            return(
+              <div key={item.id} onClick={()=>!maxed&&toggleBox(item)} style={{width:"47%",borderRadius:14,overflow:"hidden",cursor:maxed?"not-allowed":"pointer",border:`2px solid ${on?acc:"transparent"}`,background:T.card2,opacity:maxed?.45:1,transform:on?"scale(1.02)":"scale(1)",transition:"all .18s",marginBottom:3}}>
+                <div style={{position:"relative",height:84}}>
+                  <img src={item.img} alt={item.name} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} onError={e=>e.target.src="https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=300"}/>
+                  <div style={{position:"absolute",top:5,left:5,width:8,height:8,borderRadius:2,background:item.veg?"#22C55E":"#EF4444"}}/>
+                  {on&&<div style={{position:"absolute",top:5,right:5,width:20,height:20,borderRadius:"50%",background:acc,display:"flex",alignItems:"center",justifyContent:"center",fontSize:".6rem",fontWeight:900,color:"#000"}}>✓</div>}
+                </div>
+                <div style={{padding:"7px 9px 9px",fontSize:".7rem",fontWeight:700,color:T.text,lineHeight:1.2}}>{item.name}</div>
+              </div>
+            );
+          })}
+        </div>
+        {/* Confirm button */}
+        <div style={{padding:"12px 14px 0"}}>
+          {!canConfirm&&<div style={{textAlign:"center",fontSize:".65rem",color:T.muted,marginBottom:7}}>{chefBoxSel.length<5?`Select ${5-chefBoxSel.length} more item${5-chefBoxSel.length!==1?"s":""}`:!date?"Please select event date":""}</div>}
+          <button onClick={()=>{if(canConfirm){setSel({starters:chefBoxSel,mains:[],breads:[],rice:[],desserts:[],condiments:[]});setScreen("confirm");}}} style={{width:"100%",padding:"13px",background:canConfirm?`linear-gradient(135deg,${acc},${G.goldd})`:"#1A1A1A",color:canConfirm?"#000":T.muted,border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",fontWeight:900,cursor:canConfirm?"pointer":"not-allowed",transition:"all .2s"}}>
+            {canConfirm?"Review My Box →":"Select exactly 5 items"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── BUILDER ───────────────────────────────────────────────────────────────
+if(screen==="builder"){
+  const cur=BUILDER_STEPS[step];
+  const curDishes=cur.key==="condiments"?condiments.filter(i=>i.active!==false):filterFood(food[cur.key]||[]);
+  const curSel=sel[cur.key]||[];
+  const goNext=()=>{
+    if(cur.key==="start"){if(!date){setDateErr(true);return;}setDateErr(false);}
+    if(step<BUILDER_STEPS.length-1) setStep(s=>s+1);
+    else setScreen("confirm");
+  };
+  return(
+    <div style={{...W,height:"100vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <style>{css}</style>
+      <GlowBg color={acc}/>
+      <div style={{position:"relative",zIndex:1,flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+        <div style={{display:"flex",alignItems:"center",gap:9,padding:"12px 14px 8px",flexShrink:0}}>
+          <button onClick={()=>setScreen("home")} style={{background:T.card,border:`1px solid ${T.border}`,color:T.text,width:33,height:33,borderRadius:"50%",cursor:"pointer",fontSize:".82rem",flexShrink:0}}>←</button>
+          <div style={{flex:1}}><div style={{fontSize:".54rem",color:T.muted,textTransform:"uppercase",letterSpacing:".08em"}}>Build Your Menu</div><div style={{fontSize:".9rem",fontWeight:900,color:T.text}}>{cur.emoji} {cur.label}</div></div>
+          {allReady&&<button onClick={()=>setScreen("confirm")} style={{flexShrink:0,padding:"6px 12px",borderRadius:50,background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",fontSize:".65rem",fontWeight:900,cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Review →</button>}
+          <Logo size={34} accent={acc}/>
+        </div>
+
+        {/* ── LIVE PRICE BAR ── */}
+        {(cur.key!=="start")&&(()=>{
+          const {tier,ppRate,total}=calcPrice(sel,pax);
+          return(
+            <div style={{padding:"0 14px 6px",flexShrink:0}}>
+              <div style={{background:T.card2,borderRadius:12,padding:"8px 13px",border:`1px solid ${acc}33`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div>
+                  <div style={{fontSize:".58rem",color:T.muted}}>{tier} Package</div>
+                  <div style={{fontSize:".7rem",fontWeight:800,color:acc}}>₹{ppRate}/pp × {pax} guests</div>
+                </div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontSize:".58rem",color:T.muted}}>Est. Total</div>
+                  <div style={{fontSize:".9rem",fontWeight:900,color:acc}}>₹{total.toLocaleString()}</div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+        {cur.key==="start"&&(
+          <div style={{flex:1,overflowY:"auto",padding:"0 14px 8px"}}>
+            {occasion?.vegOnly&&<div style={{background:"linear-gradient(135deg,#4C1D95,#7C3AED)",borderRadius:14,padding:"11px 13px",marginBottom:12,display:"flex",alignItems:"center",gap:10}}>
+              <span style={{fontSize:"1.4rem"}}>🕉️</span>
+              <div><div style={{fontSize:".74rem",fontWeight:800,color:"#fff"}}>Satvik Mode Active</div><div style={{fontSize:".6rem",color:"rgba(255,255,255,.65)"}}>Menu filtered for this occasion</div></div>
+            </div>}
+            <div style={{fontSize:".64rem",fontWeight:700,color:T.muted,textTransform:"uppercase",marginBottom:7}}>Occasion *</div>
+            <div style={{display:"flex",gap:7,overflowX:"auto",marginBottom:13,paddingBottom:2}}>
+              {OCCASIONS.map(o=>(
+                <div key={o.id} onClick={()=>setOccasion(o)} style={{flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",gap:4,cursor:"pointer"}}>
+                  <div style={{width:50,height:50,borderRadius:14,background:occasion?.id===o.id?`${acc}22`:T.card2,border:`2px solid ${occasion?.id===o.id?acc:T.border}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.3rem",transition:"all .2s",boxShadow:occasion?.id===o.id?`0 0 12px ${acc}44`:"none"}}>{o.emoji}</div>
+                  <div style={{fontSize:".57rem",fontWeight:occasion?.id===o.id?700:500,color:occasion?.id===o.id?acc:T.muted,textAlign:"center",whiteSpace:"nowrap"}}>{o.label}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{marginBottom:12}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                <div style={{fontSize:".64rem",fontWeight:700,color:T.muted,textTransform:"uppercase"}}>Event Date <span style={{color:G.red}}>*</span></div>
+                {dateErr&&<div style={{fontSize:".6rem",color:G.red,fontWeight:600}}>⚠️ Required</div>}
+              </div>
+              <input type="date" value={date} onChange={e=>{setDate(e.target.value);setDateErr(false);}} style={{width:"100%",padding:"11px 13px",border:`1.5px solid ${dateErr?G.red:date?acc+"55":T.border}`,borderRadius:12,fontFamily:"'Poppins',sans-serif",fontSize:".88rem",color:date?T.text:T.muted,background:T.card2,outline:"none",transition:"border-color .2s"}}/>
+            </div>
+            {/* PAX */}
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:".64rem",fontWeight:700,color:T.muted,textTransform:"uppercase",marginBottom:8}}>Number of Guests *</div>
+              <div style={{background:T.card2,borderRadius:18,padding:"16px 14px",border:`1px solid ${T.border}`,display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
+                <div style={{position:"relative",width:100,height:100}}>
+                  <svg width="100" height="100" style={{position:"absolute",top:0,left:0}}>
+                    <circle cx="50" cy="50" r="44" fill="none" stroke={T.card3} strokeWidth="6"/>
+                    <circle cx="50" cy="50" r="44" fill="none" stroke={acc} strokeWidth="6" strokeDasharray={`${((pax-1)/(settings.maxGuests-1))*277} 277`} strokeLinecap="round" transform="rotate(-90 50 50)" style={{transition:"stroke-dasharray .3s"}}/>
+                  </svg>
+                  <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+                    <div style={{fontSize:"1.9rem",fontWeight:900,color:acc,lineHeight:1}}>{pax}</div>
+                    <div style={{fontSize:".55rem",color:T.muted}}>guests</div>
+                  </div>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <button onClick={()=>setPax(p=>Math.max(1,p-1))} style={{width:36,height:36,borderRadius:"50%",background:T.card3,border:`1px solid ${T.border}`,color:T.text,fontSize:"1.2rem",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>−</button>
+                  <div style={{display:"flex",gap:5,flexWrap:"wrap",justifyContent:"center"}}>
+                    {[5,10,15,20,25,30,settings.maxGuests].filter((v,i,a)=>a.indexOf(v)===i).map(n=>(
+                      <button key={n} onClick={()=>setPax(n)} style={{padding:"4px 8px",borderRadius:8,border:`1px solid ${pax===n?acc:T.border}`,background:pax===n?`${acc}22`:"transparent",color:pax===n?acc:T.muted2,fontSize:".62rem",fontWeight:700,cursor:"pointer",fontFamily:"'Poppins',sans-serif",transition:"all .15s"}}>{n}</button>
+                    ))}
+                  </div>
+                  <button onClick={()=>setPax(p=>Math.min(settings.maxGuests,p+1))} style={{width:36,height:36,borderRadius:"50%",background:T.card3,border:`1px solid ${T.border}`,color:T.text,fontSize:"1.2rem",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>+</button>
+                </div>
+                <input type="range" min="1" max={settings.maxGuests} value={pax} onChange={e=>setPax(Number(e.target.value))} style={{width:"100%",accentColor:acc,height:3,cursor:"pointer"}}/>
+              </div>
+            </div>
+            <div style={{fontSize:".64rem",fontWeight:700,color:T.muted,textTransform:"uppercase",marginBottom:7}}>Diet Preference</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
+              {[["veg","🟢","Veg Only","Pure vegetarian"],["nonveg","🔴","Non-Veg","Meat included"],["both","🟡","Mixed","Veg + Non-Veg"],["satvik","🕉️","Satvik","No onion/garlic"]].map(([val,ic,lb,sub])=>(
+                <button key={val} onClick={()=>setDiet(val)} disabled={occasion?.vegOnly&&val!=="veg"&&val!=="satvik"}
+                  style={{padding:"10px 8px",borderRadius:12,border:`1.5px solid ${diet===val?acc:T.border}`,background:diet===val?`${acc}18`:"transparent",cursor:occasion?.vegOnly&&val!=="veg"&&val!=="satvik"?"not-allowed":"pointer",opacity:occasion?.vegOnly&&val!=="veg"&&val!=="satvik"?.3:1,textAlign:"left",transition:"all .15s",fontFamily:"'Poppins',sans-serif"}}>
+                  <div style={{fontSize:".78rem",fontWeight:700,color:diet===val?acc:T.text,marginBottom:2}}>{ic} {lb}</div>
+                  <div style={{fontSize:".58rem",color:T.muted}}>{sub}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {cur.key!=="start"&&(
+          <div style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column"}}>
+            <div style={{padding:"0 14px 5px",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div>
+                <div style={{fontSize:".62rem",color:T.muted}}>{curSel.length>0?`${curSel.length} selected`:"Tap a dish to add"}</div>
+                {occasion&&<div style={{fontSize:".57rem",color:acc,marginTop:1}}>🎯 Filtered for {occasion?.label}</div>}
+              </div>
+              {(cur.key!=="mains")&&<button onClick={()=>setStep(s=>Math.min(BUILDER_STEPS.length-1,s+1))} style={{background:"transparent",border:`1px solid ${T.border}`,color:T.muted,padding:"4px 10px",borderRadius:50,fontSize:".6rem",cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Skip →</button>}
+            </div>
+            {curSel.length>0&&(
+              <div style={{padding:"0 14px 5px",flexShrink:0,display:"flex",gap:4,overflowX:"auto"}}>
+                {curSel.map(item=>(
+                  <div key={item.id} onClick={()=>toggleSel(cur.key,item)} style={{flexShrink:0,display:"flex",alignItems:"center",gap:3,background:`${acc}18`,border:`1px solid ${acc}44`,borderRadius:50,padding:"2px 8px 2px 3px",cursor:"pointer"}}>
+                    <img src={item.img} alt="" style={{width:13,height:13,borderRadius:"50%",objectFit:"cover"}}/>
+                    <span style={{fontSize:".57rem",fontWeight:700,color:acc,whiteSpace:"nowrap"}}>{item.name}</span>
+                    <span style={{fontSize:".52rem",color:T.muted}}>✕</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{flex:1,display:"flex",gap:10,overflowX:"auto",padding:"0 14px",alignItems:"center"}}>
+              {curDishes.length===0
+                ?<div style={{textAlign:"center",width:"100%",color:T.muted}}><div style={{fontSize:"2rem",marginBottom:6}}>🍽️</div><div style={{fontSize:".75rem"}}>No dishes for this occasion/diet</div><div style={{fontSize:".62rem",marginTop:3}}>Go back to "Let's Start" to adjust</div></div>
+                :curDishes.map(item=><DishCard key={item.id} item={item} selected={curSel} onToggle={i=>toggleSel(cur.key,i)} accent={acc}/>)}
+            </div>
+          </div>
+        )}
+
+        <div style={{padding:"6px 14px 5px",flexShrink:0}}>
+          <button onClick={goNext} style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".84rem",fontWeight:900,cursor:"pointer",boxShadow:`0 4px 16px ${acc}33`}}>
+            {step<BUILDER_STEPS.length-1?`Next: ${BUILDER_STEPS[step+1].label} →`:"Review My Menu →"}
+          </button>
+        </div>
+        <div style={{flexShrink:0,background:`linear-gradient(180deg,transparent,${T.card} 30%)`,paddingTop:2}}>
+          <div style={{textAlign:"center",paddingTop:6}}><div style={{fontSize:".52rem",color:T.muted,fontWeight:500,letterSpacing:".1em",textTransform:"uppercase"}}>← Tap to switch course →</div></div>
+          <SemiPieWheel items={BUILDER_STEPS} activeIdx={step} onSelect={setStep} accent={acc} completed={completed}/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── CONFIRM ───────────────────────────────────────────────────────────────
+if(screen==="confirm") return(
+  <div style={{...W,paddingBottom:40}}>
+    <style>{css}</style>
+    <GlowBg color={acc}/>
+    <div style={{position:"relative",zIndex:1}}>
+      {sent?(
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"0 28px",textAlign:"center"}}>
+          <div style={{fontSize:"3.2rem",marginBottom:4,animation:"bounce 1.2s ease infinite"}}>🎉</div>
+          <div style={{width:72,height:72,borderRadius:"50%",background:`${acc}18`,border:`2px solid ${acc}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"2rem",marginBottom:14}}>✅</div>
+          <div style={{fontSize:"1.35rem",fontWeight:900,marginBottom:5,color:T.text}}>Order <span style={{color:acc}}>Sent!</span></div>
+          <div style={{fontSize:".8rem",color:T.muted2,lineHeight:1.7,marginBottom:16}}>Your custom menu has been sent. We confirm within 2 hours.</div>
+          <a href={`https://wa.me/${settings.whatsapp.replace(/\D/g,"")}?text=${encodeURIComponent("Hi")}`} target="_blank" rel="noreferrer" style={{background:"linear-gradient(135deg,#16A34A,#15803D)",color:"#fff",padding:"12px",borderRadius:50,fontSize:".86rem",fontWeight:900,textDecoration:"none",display:"block",width:"100%",textAlign:"center",marginBottom:9}}>💬 Open WhatsApp</a>
+          <button onClick={()=>{setSent(false);setSel({starters:[],mains:[],breads:[],rice:[],desserts:[]});setStep(0);setOccasion(null);setDate("");setScreen("home");}} style={{background:"transparent",color:T.muted,border:`1px solid ${T.border}`,padding:"10px",borderRadius:50,fontSize:".78rem",cursor:"pointer",fontFamily:"'Poppins',sans-serif",width:"100%"}}>Plan Another</button>
+        </div>
         ):(
           <>
             <Header back={()=>setScreen("builder")} title={{sub:"Final Step",main:"Review & Confirm"}}/>
