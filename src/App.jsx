@@ -1,7 +1,3 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// App_Part1.jsx  —  Paste into App.jsx first (lines 1–247)
-// Contains: imports, themes, all constants, SemiPieWheel, DishCard, Logo, GlowBg
-// ─────────────────────────────────────────────────────────────────────────────
 import { useState, useEffect, useRef } from "react";
 
 // ── THEMES ────────────────────────────────────────────────────────────────────
@@ -137,6 +133,8 @@ const OCCASIONS = [
   {id:"farewell",  label:"Farewell",        emoji:"🌟"},
 ];
 
+// Reviews now managed via state (DEF_REVIEWS above)
+
 const OUR_WORK=[
   "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600&q=85",
   "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=600&q=85",
@@ -155,6 +153,7 @@ const SPECIALITIES=[
   {name:"Chicken Tikka Masala",   desc:"Tandoori chicken in smoky vibrant tomato masala",             img:"https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&q=85",veg:false},
 ];
 
+// Areas now managed via state (DEF_AREAS above)
 const BUILDER_STEPS=[
   {key:"start",      label:"Let's Start",  emoji:"🌟"},
   {key:"starters",   label:"Starters",     emoji:"🍢"},
@@ -249,11 +248,6 @@ function GlowBg({color}){
 }
 
 // ── KOT PRINT VIEW ────────────────────────────────────────────────────────────
-// ─────────────────────────────────────────────────────────────────────────────
-// App_Part2.jsx  —  Paste AFTER Part 1 (lines 248–727)
-// Contains: KOTView, BillView, ManualOrderForm, ImageUploader, BusinessForm,
-//           ReviewsSection, AreasSection
-// ─────────────────────────────────────────────────────────────────────────────
 function KOTView({order,settings,onClose}){
   const now=new Date();
   const kotNo="KOT-"+order.id.toString().slice(-4);
@@ -261,18 +255,21 @@ function KOTView({order,settings,onClose}){
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:600,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={onClose}>
       <div style={{background:"#fff",borderRadius:16,width:"100%",maxWidth:360,padding:"20px",fontFamily:"'Courier New',monospace",color:"#000",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+        {/* KOT Header */}
         <div style={{textAlign:"center",borderBottom:"2px dashed #000",paddingBottom:10,marginBottom:10}}>
           <div style={{fontSize:"1.1rem",fontWeight:900,letterSpacing:2}}>KITCHEN ORDER TICKET</div>
           <div style={{fontSize:".75rem",fontWeight:700,marginTop:3}}>{settings.businessName}</div>
           <div style={{fontSize:".68rem",marginTop:2}}>{kotNo}</div>
           <div style={{fontSize:".65rem",color:"#555",marginTop:2}}>{now.toLocaleString()}</div>
         </div>
+        {/* Order info */}
         <div style={{fontSize:".72rem",marginBottom:8,lineHeight:1.7}}>
           <div>Customer: <strong>{order.name}</strong></div>
           <div>Event: <strong>{order.occasion}</strong> · Date: <strong>{order.date}</strong></div>
           <div>Guests: <strong>{order.pax}</strong> · Diet: <strong>{order.diet}</strong></div>
         </div>
         <div style={{borderTop:"1px dashed #000",paddingTop:8,marginBottom:8}}/>
+        {/* Items by course */}
         {[["🍢 STARTERS","starters"],["🍛 MAINS","mains"],["🫓 BREADS","breads"],["🍚 RICE","rice"],["🍮 DESSERTS","desserts"]].map(([lb,key])=>all[key].length>0&&(
           <div key={key} style={{marginBottom:8}}>
             <div style={{fontSize:".72rem",fontWeight:900,textDecoration:"underline",marginBottom:4}}>{lb}</div>
@@ -314,6 +311,7 @@ function BillView({order,settings,combos,onClose}){
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:600,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={onClose}>
       <div style={{background:"#fff",borderRadius:16,width:"100%",maxWidth:380,padding:"20px",fontFamily:"'Poppins',sans-serif",color:"#000",maxHeight:"92vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+        {/* Bill Header */}
         <div style={{textAlign:"center",marginBottom:14}}>
           <div style={{width:52,height:52,borderRadius:"50%",background:"linear-gradient(135deg,#FF2D7E,#9B1B4B)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.5rem",margin:"0 auto 8px"}}>👩‍🍳</div>
           <div style={{fontSize:"1.2rem",fontWeight:900,color:"#111"}}>{settings.businessName}</div>
@@ -322,6 +320,7 @@ function BillView({order,settings,combos,onClose}){
           {settings.gstin&&<div style={{fontSize:".62rem",color:"#999"}}>GSTIN: {settings.gstin}</div>}
         </div>
         <div style={{border:"1.5px dashed #ddd",margin:"10px 0"}}/>
+        {/* Bill details */}
         <div style={{background:"#f9f9f9",borderRadius:10,padding:"10px 12px",marginBottom:10,fontSize:".72rem",lineHeight:1.8}}>
           <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#888"}}>Invoice No.</span><strong>{billNo}</strong></div>
           <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#888"}}>Date</span><strong>{now.toLocaleDateString()}</strong></div>
@@ -330,6 +329,7 @@ function BillView({order,settings,combos,onClose}){
           <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#888"}}>Event</span><strong>{order.occasion} · {order.date}</strong></div>
           <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#888"}}>Area</span><strong>{order.area||"—"}</strong></div>
         </div>
+        {/* Items */}
         <div style={{marginBottom:10}}>
           <div style={{fontSize:".7rem",fontWeight:700,color:"#333",marginBottom:6,borderBottom:"1px solid #eee",paddingBottom:4}}>Order Summary</div>
           <div style={{display:"flex",justifyContent:"space-between",fontSize:".68rem",color:"#888",marginBottom:4}}>
@@ -344,6 +344,7 @@ function BillView({order,settings,combos,onClose}){
           )}
         </div>
         <div style={{border:"1px dashed #ddd",margin:"8px 0"}}/>
+        {/* Pricing */}
         <div style={{fontSize:".74rem",lineHeight:2}}>
           <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#666"}}>Subtotal</span><span>₹{subtotal.toLocaleString()}</span></div>
           <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#666"}}>GST ({gstRate}%)</span><span>₹{gstAmt.toLocaleString()}</span></div>
@@ -353,6 +354,7 @@ function BillView({order,settings,combos,onClose}){
           <span style={{fontSize:".88rem",fontWeight:900}}>Total</span>
           <span style={{fontSize:"1.1rem",fontWeight:900,color:G.goldd}}>₹{finalTotal.toLocaleString()}</span>
         </div>
+        {/* GST breakdown */}
         <div style={{fontSize:".6rem",color:"#aaa",marginTop:8,textAlign:"center"}}>
           CGST ({gstRate/2}%) + SGST ({gstRate/2}%) | HSN: 996334
         </div>
@@ -386,9 +388,11 @@ function ManualOrderForm({onSave,onClose,T,acc,food,combos}){
       <div style={{background:T.bg,borderRadius:"22px 22px 0 0",width:"100%",maxWidth:430,maxHeight:"92vh",overflowY:"auto",padding:"18px 16px 30px"}} onClick={e=>e.stopPropagation()}>
         <div style={{height:4,width:40,background:T.card3,borderRadius:50,margin:"0 auto 14px"}}/>
         <div style={{fontSize:".95rem",fontWeight:900,color:T.text,marginBottom:14}}>📋 New Manual Order</div>
+
+        {/* Customer details */}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:9}}>
           {[["Customer Name","text","name"],["Phone","tel","phone"],["Event Date","date","date"],["Area","text","area"]].map(([lb,tp,k])=>(
-            <div key={k}>
+            <div key={k} style={{gridColumn:k==="name"||k==="phone"?"span 1":"span 1"}}>
               <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:3,textTransform:"uppercase"}}>{lb}</div>
               <input type={tp} value={f[k]} onChange={e=>setF({...f,[k]:e.target.value})} style={inputS}/>
             </div>
@@ -412,6 +416,8 @@ function ManualOrderForm({onSave,onClose,T,acc,food,combos}){
             </select>
           </div>
         </div>
+
+        {/* Course selection */}
         <div style={{fontSize:".72rem",fontWeight:700,color:acc,marginBottom:8}}>Select Dishes</div>
         <div style={{display:"flex",gap:5,marginBottom:10,overflowX:"auto"}}>
           {cats.map(c=>(
@@ -434,6 +440,8 @@ function ManualOrderForm({onSave,onClose,T,acc,food,combos}){
             );
           })}
         </div>
+
+        {/* Pricing */}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:9}}>
           <div>
             <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:3,textTransform:"uppercase"}}>₹ Rate /person</div>
@@ -444,10 +452,12 @@ function ManualOrderForm({onSave,onClose,T,acc,food,combos}){
             <input type="number" value={f.discountAmt} onChange={e=>setF({...f,discountAmt:Number(e.target.value)})} style={inputS}/>
           </div>
         </div>
+        {/* Notes */}
         <div style={{marginBottom:14}}>
           <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:3,textTransform:"uppercase"}}>Notes</div>
           <textarea value={f.notes} onChange={e=>setF({...f,notes:e.target.value})} rows={2} placeholder="Special requirements…" style={{...inputS,resize:"none"}}/>
         </div>
+        {/* Total preview */}
         <div style={{background:`${acc}18`,borderRadius:12,padding:"10px 14px",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center",border:`1px solid ${acc}33`}}>
           <span style={{fontSize:".76rem",color:T.muted}}>Est. Total (excl. GST)</span>
           <span style={{fontSize:".95rem",fontWeight:900,color:acc}}>₹{((f.pricePerPerson*f.pax)-f.discountAmt).toLocaleString()}</span>
@@ -461,7 +471,8 @@ function ManualOrderForm({onSave,onClose,T,acc,food,combos}){
   );
 }
 
-// ── IMAGE UPLOADER ────────────────────────────────────────────────────────────
+// ── ADMIN PANEL ───────────────────────────────────────────────────────────────
+// ── IMAGE UPLOADER — converts photo to base64 data URL (works offline, no server needed)
 function ImageUploader({label, currentImg, onUpload, T, acc, G, size="medium"}){
   const [preview,   setPreview]   = useState(currentImg||"");
   const [urlInput,  setUrlInput]  = useState("");
@@ -478,6 +489,7 @@ function ImageUploader({label, currentImg, onUpload, T, acc, G, size="medium"}){
     setUploading(true);
     setMsg("Loading photo...");
     try {
+      // Step 1: Show local preview immediately via FileReader
       const dataUrl = await new Promise((res,rej)=>{
         const r = new FileReader();
         r.onload  = ()=>res(r.result);
@@ -487,37 +499,30 @@ function ImageUploader({label, currentImg, onUpload, T, acc, G, size="medium"}){
       setPreview(dataUrl);
       onUpload(dataUrl);
       setMsg("Uploading to server...");
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", "mrschef_unsigned");
-      formData.append("cloud_name", "mrschef");
+
+      // Step 2: Upload to imgbb — permanent URL, free
+      setMsg("Uploading to cloud...");
       try {
-        const res  = await fetch("https://api.cloudinary.com/v1_1/mrschef/image/upload",{method:"POST", body:formData});
-        const data = await res.json();
-        if(data?.secure_url){
-          setPreview(data.secure_url);
-          onUpload(data.secure_url);
+        const IMGBB = "4ff4ee9593a08050cf055e0cb68f6940";
+        const fd2 = new FormData();
+        fd2.append("image", dataUrl.split(",")[1]);
+        const r2   = await fetch(
+          `https://api.imgbb.com/1/upload?key=${IMGBB}`,
+          {method:"POST", body:fd2}
+        );
+        const d2 = await r2.json();
+        if(d2?.success && d2?.data?.display_url){
+          const url = d2.data.display_url;
+          setPreview(url);
+          onUpload(url);
           setMsg("✅ Uploaded! Permanent link saved.");
         } else {
-          throw new Error("Cloudinary failed");
+          // imgbb returned error — keep local base64
+          setMsg("✅ Photo saved locally (cloud upload failed — check internet)");
         }
-      } catch {
-        const IMGBB = "your_key_here";
-        if(IMGBB !== "your_key_here"){
-          const fd2 = new FormData();
-          fd2.append("image", dataUrl.split(",")[1]);
-          const r2   = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB}`,{method:"POST",body:fd2});
-          const d2   = await r2.json();
-          if(d2?.success){
-            setPreview(d2.data.display_url);
-            onUpload(d2.data.display_url);
-            setMsg("✅ Uploaded to imgbb! Permanent link saved.");
-          } else {
-            setMsg("✅ Photo saved locally (add imgbb key for cloud storage)");
-          }
-        } else {
-          setMsg("✅ Photo saved locally. Add imgbb.com key for cloud storage.");
-        }
+      } catch(uploadErr){
+        // Network error — keep local base64 preview
+        setMsg("✅ Photo saved locally (no internet for cloud upload)");
       }
     } catch(err){
       setMsg("❌ Failed to load photo. Try again.");
@@ -536,43 +541,80 @@ function ImageUploader({label, currentImg, onUpload, T, acc, G, size="medium"}){
 
   return(
     <div style={{marginBottom:16}}>
-      <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:".05em"}}>{label}</div>
+      <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:6,
+        textTransform:"uppercase",letterSpacing:".05em"}}>{label}</div>
       {preview&&(
-        <div style={{height:h,borderRadius:12,overflow:"hidden",marginBottom:10,border:`1.5px solid ${acc}44`,position:"relative",background:T.card2}}>
-          <img src={preview} alt="preview" style={{width:"100%",height:"100%",objectFit:size==="logo"?"contain":"cover"}} onError={()=>{setPreview("");onUpload("");}}/>
-          <button onClick={()=>{setPreview("");onUpload("");setMsg("");}} style={{position:"absolute",top:6,right:6,background:"rgba(0,0,0,.7)",border:"none",color:"#fff",width:26,height:26,borderRadius:"50%",cursor:"pointer",fontSize:".72rem"}}>✕</button>
+        <div style={{height:h,borderRadius:12,overflow:"hidden",marginBottom:10,
+          border:`1.5px solid ${acc}44`,position:"relative",background:T.card2}}>
+          <img src={preview} alt="preview"
+            style={{width:"100%",height:"100%",objectFit:size==="logo"?"contain":"cover"}}
+            onError={()=>{setPreview("");onUpload("");}}/>
+          <button onClick={()=>{setPreview("");onUpload("");setMsg("");}}
+            style={{position:"absolute",top:6,right:6,background:"rgba(0,0,0,.7)",
+              border:"none",color:"#fff",width:26,height:26,borderRadius:"50%",
+              cursor:"pointer",fontSize:".72rem"}}>✕</button>
         </div>
       )}
       <div style={{display:"flex",gap:5,marginBottom:9}}>
         {[["upload","📷 Upload Photo"],["url","🔗 Paste URL"]].map(([t,lb])=>(
-          <button key={t} onClick={()=>{setTab(t);setMsg("");}} style={{flex:1,padding:"8px",border:`1px solid ${tab===t?acc:T.border}`,borderRadius:9,background:tab===t?`${acc}18`:"transparent",color:tab===t?acc:T.muted,fontSize:".7rem",fontWeight:tab===t?700:500,cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>{lb}</button>
+          <button key={t} onClick={()=>{setTab(t);setMsg("");}}
+            style={{flex:1,padding:"8px",border:`1px solid ${tab===t?acc:T.border}`,
+              borderRadius:9,background:tab===t?`${acc}18`:"transparent",
+              color:tab===t?acc:T.muted,fontSize:".7rem",fontWeight:tab===t?700:500,
+              cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>{lb}</button>
         ))}
       </div>
       {tab==="upload"&&(
         <div>
-          <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{display:"none"}}/>
-          <button onClick={()=>fileRef.current?.click()} disabled={uploading} style={{width:"100%",padding:"13px",background:uploading?T.card3:T.card2,color:uploading?T.muted:T.text,border:`2px dashed ${uploading?acc:T.border}`,borderRadius:11,cursor:uploading?"wait":"pointer",fontFamily:"'Poppins',sans-serif",fontSize:".82rem",fontWeight:600}}>
+          {/* NO capture attribute — user chooses camera or gallery */}
+          <input ref={fileRef} type="file" accept="image/*"
+            onChange={handleFile} style={{display:"none"}}/>
+          <button onClick={()=>fileRef.current?.click()} disabled={uploading}
+            style={{width:"100%",padding:"13px",
+              background:uploading?T.card3:T.card2,
+              color:uploading?T.muted:T.text,
+              border:`2px dashed ${uploading?acc:T.border}`,
+              borderRadius:11,cursor:uploading?"wait":"pointer",
+              fontFamily:"'Poppins',sans-serif",fontSize:".82rem",fontWeight:600}}>
             {uploading?"⏳ Uploading...":"📷 Choose from Gallery or Camera"}
           </button>
-          {msg&&<div style={{fontSize:".66rem",marginTop:7,textAlign:"center",fontWeight:600,color:msg.includes("✅")?G.green:msg.includes("❌")?G.red:T.muted}}>{msg}</div>}
-          <div style={{fontSize:".6rem",color:T.muted,marginTop:5,textAlign:"center"}}>Photo uploads automatically and saves a permanent link</div>
+          {msg&&<div style={{fontSize:".66rem",marginTop:7,textAlign:"center",fontWeight:600,
+            color:msg.includes("✅")?G.green:msg.includes("❌")?G.red:T.muted}}>{msg}</div>}
+          <div style={{fontSize:".6rem",color:T.muted,marginTop:5,textAlign:"center"}}>
+            Photo uploads automatically and saves a permanent link
+          </div>
         </div>
       )}
       {tab==="url"&&(
         <div>
           <div style={{display:"flex",gap:7}}>
-            <input value={urlInput} onChange={e=>setUrlInput(e.target.value)} placeholder="https://i.ibb.co/... or any image URL" style={{flex:1,padding:"10px 11px",border:`1px solid ${T.border}`,borderRadius:9,fontFamily:"'Poppins',sans-serif",fontSize:".78rem",color:T.text,background:T.card2,outline:"none"}}/>
-            <button onClick={handleUrl} style={{padding:"10px 14px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:9,fontSize:".76rem",fontWeight:800,cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Use</button>
+            <input value={urlInput} onChange={e=>setUrlInput(e.target.value)}
+              placeholder="https://i.ibb.co/... or any image URL"
+              style={{flex:1,padding:"10px 11px",border:`1px solid ${T.border}`,
+                borderRadius:9,fontFamily:"'Poppins',sans-serif",fontSize:".78rem",
+                color:T.text,background:T.card2,outline:"none"}}/>
+            <button onClick={handleUrl}
+              style={{padding:"10px 14px",background:`linear-gradient(135deg,${acc},${G.goldd})`,
+                color:"#000",border:"none",borderRadius:9,fontSize:".76rem",fontWeight:800,
+                cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Use</button>
           </div>
-          {msg&&<div style={{fontSize:".66rem",marginTop:5,fontWeight:600,color:msg.includes("✅")?G.green:G.red}}>{msg}</div>}
-          <div style={{fontSize:".6rem",color:T.muted,marginTop:4}}>Tip: upload to imgbb.com → copy Direct Link → paste above</div>
+          {msg&&<div style={{fontSize:".66rem",marginTop:5,fontWeight:600,
+            color:msg.includes("✅")?G.green:G.red}}>{msg}</div>}
+          <div style={{fontSize:".6rem",color:T.muted,marginTop:4}}>
+            Tip: upload to imgbb.com → copy Direct Link → paste above
+          </div>
         </div>
       )}
     </div>
   );
 }
 
+
 function BusinessForm({settings, setSettings, T, acc, G, show, onBack}){
+  // ── Individual useState per field ──────────────────────────────────────
+  // This is the ONLY fix that works on mobile.
+  // Each field has its own isolated state — typing in one field
+  // does NOT cause other fields to re-render, so cursor never jumps.
   const [f_businessName, set_businessName] = useState(settings.businessName||"");
   const [f_tagline,      set_tagline]      = useState(settings.tagline||"");
   const [f_heroText,     set_heroText]     = useState(settings.heroText||"");
@@ -592,7 +634,9 @@ function BusinessForm({settings, setSettings, T, acc, G, show, onBack}){
   const [f_founderImg,   set_founderImg]   = useState(settings.founderImg||"");
   const [saved,          setSaved]         = useState(false);
 
-  const IS = {width:"100%",padding:"11px 13px",border:`1px solid ${T.border}`,borderRadius:11,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",color:T.text,background:T.card2,outline:"none"};
+  const IS = {width:"100%",padding:"11px 13px",border:`1px solid ${T.border}`,
+    borderRadius:11,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",
+    color:T.text,background:T.card2,outline:"none"};
 
   const saveAll = () => {
     setSettings(s=>({...s,
@@ -608,13 +652,17 @@ function BusinessForm({settings, setSettings, T, acc, G, show, onBack}){
   };
 
   return(
-    <div style={{fontFamily:"'Poppins',sans-serif",background:T.bg,minHeight:"100vh",maxWidth:430,margin:"0 auto",color:T.text,overflowX:"hidden"}}>
-      <div style={{display:"flex",alignItems:"center",gap:10,padding:"14px 16px",borderBottom:`1px solid ${T.border}`,position:"sticky",top:0,background:T.bg,zIndex:10}}>
-        <button onClick={onBack} style={{background:T.card2,border:`1px solid ${T.border}`,color:T.text,width:34,height:34,borderRadius:"50%",cursor:"pointer",fontSize:".9rem"}}>←</button>
+    <div style={{fontFamily:"'Poppins',sans-serif",background:T.bg,minHeight:"100vh",
+      maxWidth:430,margin:"0 auto",color:T.text,overflowX:"hidden"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,padding:"14px 16px",
+        borderBottom:`1px solid ${T.border}`,position:"sticky",top:0,background:T.bg,zIndex:10}}>
+        <button onClick={onBack} style={{background:T.card2,border:`1px solid ${T.border}`,
+          color:T.text,width:34,height:34,borderRadius:"50%",cursor:"pointer",fontSize:".9rem"}}>←</button>
         <div style={{fontSize:"1rem",fontWeight:900,color:T.text}}>🏢 Business Info</div>
         {saved&&<div style={{marginLeft:"auto",fontSize:".72rem",color:G.green,fontWeight:700}}>✅ Saved!</div>}
       </div>
       <div style={{padding:"14px"}}>
+        {/* Each input is fully self-contained - NO shared re-render */}
         {[
           ["Business Name",              f_businessName, set_businessName, "text"],
           ["Tagline",                    f_tagline,      set_tagline,      "text"],
@@ -631,138 +679,209 @@ function BusinessForm({settings, setSettings, T, acc, G, show, onBack}){
           ["Events Count (e.g. 100+)",   f_eventsCount,  set_eventsCount,  "text"],
         ].map(([lb,val,setter,tp])=>(
           <div key={lb} style={{marginBottom:13}}>
-            <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:5,textTransform:"uppercase",letterSpacing:".05em"}}>{lb}</div>
-            <input type={tp} value={val} onChange={e=>{setter(e.target.value);}} style={IS}/>
+            <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:5,
+              textTransform:"uppercase",letterSpacing:".05em"}}>{lb}</div>
+            <input type={tp} value={val}
+              onChange={e=>{const v=e.target.value; setter(v);}}
+              style={IS}/>
           </div>
         ))}
         <div style={{marginBottom:14}}>
-          <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:5,textTransform:"uppercase"}}>About Us Text</div>
-          <textarea value={f_about} onChange={e=>set_about(e.target.value)} rows={6} style={{...IS,resize:"none",lineHeight:1.65}}/>
+          <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:5,
+            textTransform:"uppercase"}}>About Us Text</div>
+          <textarea value={f_about} onChange={e=>set_about(e.target.value)}
+            rows={6} style={{...IS,resize:"none",lineHeight:1.65}}/>
         </div>
-        <ImageUploader label="App Logo" currentImg={f_logoImg} onUpload={v=>{set_logoImg(v);}} T={T} acc={acc} G={G} size="logo"/>
-        <ImageUploader label="Home Screen Hero Photo" currentImg={f_heroImg} onUpload={v=>{set_heroImg(v);}} T={T} acc={acc} G={G} size="large"/>
-        <ImageUploader label="Founder / Chef Photo" currentImg={f_founderImg} onUpload={v=>{set_founderImg(v);}} T={T} acc={acc} G={G} size="medium"/>
-        <button onClick={saveAll} style={{width:"100%",padding:"13px",background:saved?G.green:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".88rem",fontWeight:900,cursor:"pointer"}}>
+        <ImageUploader label="App Logo" currentImg={f_logoImg}
+          onUpload={v=>{set_logoImg(v);}} T={T} acc={acc} G={G} size="logo"/>
+        <ImageUploader label="Home Screen Hero Photo" currentImg={f_heroImg}
+          onUpload={v=>{set_heroImg(v);}} T={T} acc={acc} G={G} size="large"/>
+        <ImageUploader label="Founder / Chef Photo" currentImg={f_founderImg}
+          onUpload={v=>{set_founderImg(v);}} T={T} acc={acc} G={G} size="medium"/>
+        <button onClick={saveAll}
+          style={{width:"100%",padding:"13px",
+            background:saved?G.green:`linear-gradient(135deg,${acc},${G.goldd})`,
+            color:"#000",border:"none",borderRadius:50,
+            fontFamily:"'Poppins',sans-serif",fontSize:".88rem",fontWeight:900,cursor:"pointer"}}>
           {saved?"✅ Saved!":"Save All Info ✓"}
         </button>
-        <div style={{textAlign:"center",fontSize:".63rem",color:T.muted,marginTop:8,marginBottom:24}}>Tap Save after making all changes</div>
+        <div style={{textAlign:"center",fontSize:".63rem",color:T.muted,marginTop:8,marginBottom:24}}>
+          Tap Save after making all changes
+        </div>
       </div>
     </div>
   );
 }
 
+
+// ── REVIEWS SECTION ─────────────────────────────────────────────────────
 function ReviewsSection({reviews,setReviews,T,acc,G,onBack}){
   const [rvs,setRvs] = useState([...reviews]);
   const cols=["#FF6B6B","#4FC3F7","#C9A84C","#CE93D8","#22C55E","#FFB74D","#F0B429","#3B82F6"];
-  const IS={width:"100%",padding:"9px 11px",border:`1px solid ${T.border}`,borderRadius:10,fontFamily:"'Poppins',sans-serif",fontSize:".8rem",color:T.text,background:T.card2,outline:"none"};
+  const IS={width:"100%",padding:"9px 11px",border:`1px solid ${T.border}`,borderRadius:10,
+    fontFamily:"'Poppins',sans-serif",fontSize:".8rem",color:T.text,background:T.card2,outline:"none"};
   return(
-    <div style={{fontFamily:"'Poppins',sans-serif",background:T.bg,minHeight:"100vh",maxWidth:430,margin:"0 auto",color:T.text,overflowX:"hidden"}}>
-      <div style={{display:"flex",alignItems:"center",gap:10,padding:"14px 16px",borderBottom:`1px solid ${T.border}`,position:"sticky",top:0,background:T.bg,zIndex:10}}>
-        <button onClick={()=>{setReviews(rvs);onBack();}} style={{background:T.card2,border:`1px solid ${T.border}`,color:T.text,width:34,height:34,borderRadius:"50%",cursor:"pointer",fontSize:".9rem"}}>←</button>
+    <div style={{fontFamily:"'Poppins',sans-serif",background:T.bg,minHeight:"100vh",
+      maxWidth:430,margin:"0 auto",color:T.text,overflowX:"hidden"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,padding:"14px 16px",
+        borderBottom:`1px solid ${T.border}`,position:"sticky",top:0,background:T.bg,zIndex:10}}>
+        <button onClick={()=>{setReviews(rvs);onBack();}}
+          style={{background:T.card2,border:`1px solid ${T.border}`,color:T.text,
+            width:34,height:34,borderRadius:"50%",cursor:"pointer",fontSize:".9rem"}}>←</button>
         <div style={{fontSize:"1rem",fontWeight:900,color:T.text}}>⭐ Customer Reviews</div>
       </div>
       <div style={{padding:"12px 14px"}}>
-        <div style={{fontSize:".7rem",color:T.muted2,marginBottom:12}}>Edit reviews shown on the Reviews page. Changes save when you tap ←</div>
+        <div style={{fontSize:".7rem",color:T.muted2,marginBottom:12}}>
+          Edit reviews shown on the Reviews page. Changes save when you tap ←</div>
         {rvs.map((r,i)=>(
-          <div key={i} style={{background:T.card,borderRadius:16,padding:"13px",marginBottom:10,border:`1px solid ${T.border}`}}>
+          <div key={i} style={{background:T.card,borderRadius:16,padding:"13px",
+            marginBottom:10,border:`1px solid ${T.border}`}}>
             <div style={{display:"flex",gap:7,marginBottom:8,flexWrap:"wrap"}}>
               <div style={{flex:1}}>
                 <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:3,textTransform:"uppercase"}}>Name</div>
-                <input value={r.name} onChange={e=>{const n=[...rvs];n[i]={...n[i],name:e.target.value};setRvs(n);}} style={{...IS,width:"100%"}}/>
+                <input value={r.name}
+                  onChange={e=>{const n=[...rvs];n[i]={...n[i],name:e.target.value};setRvs(n);}}
+                  style={{...IS,width:"100%"}}/>
               </div>
               <div style={{flex:1}}>
                 <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:3,textTransform:"uppercase"}}>Location</div>
-                <input value={r.loc} onChange={e=>{const n=[...rvs];n[i]={...n[i],loc:e.target.value};setRvs(n);}} style={{...IS,width:"100%"}}/>
+                <input value={r.loc}
+                  onChange={e=>{const n=[...rvs];n[i]={...n[i],loc:e.target.value};setRvs(n);}}
+                  style={{...IS,width:"100%"}}/>
               </div>
             </div>
             <div style={{marginBottom:8}}>
               <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:3,textTransform:"uppercase"}}>Review</div>
-              <textarea value={r.text} rows={2} onChange={e=>{const n=[...rvs];n[i]={...n[i],text:e.target.value};setRvs(n);}} style={{...IS,resize:"none",width:"100%"}}/>
+              <textarea value={r.text} rows={2}
+                onChange={e=>{const n=[...rvs];n[i]={...n[i],text:e.target.value};setRvs(n);}}
+                style={{...IS,resize:"none",width:"100%"}}/>
             </div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div style={{display:"flex",gap:3}}>
                 {[1,2,3,4,5].map(s=>(
-                  <span key={s} onClick={()=>{const n=[...rvs];n[i]={...n[i],stars:s};setRvs(n);}} style={{fontSize:"1.1rem",cursor:"pointer",opacity:s<=r.stars?1:.25}}>⭐</span>
+                  <span key={s} onClick={()=>{const n=[...rvs];n[i]={...n[i],stars:s};setRvs(n);}}
+                    style={{fontSize:"1.1rem",cursor:"pointer",opacity:s<=r.stars?1:.25}}>⭐</span>
                 ))}
               </div>
               <div style={{display:"flex",gap:5}}>
                 <div style={{display:"flex",gap:4}}>
                   {cols.map(c=>(
-                    <div key={c} onClick={()=>{const n=[...rvs];n[i]={...n[i],col:c};setRvs(n);}} style={{width:13,height:13,borderRadius:"50%",background:c,cursor:"pointer",border:`2px solid ${r.col===c?"#fff":"transparent"}`}}/>
+                    <div key={c} onClick={()=>{const n=[...rvs];n[i]={...n[i],col:c};setRvs(n);}}
+                      style={{width:13,height:13,borderRadius:"50%",background:c,cursor:"pointer",
+                        border:`2px solid ${r.col===c?"#fff":"transparent"}`}}/>
                   ))}
                 </div>
-                <button onClick={()=>setRvs(rvs.filter((_,j)=>j!==i))} style={{background:`${G.red}18`,color:G.red,border:`1px solid ${G.red}33`,padding:"3px 10px",borderRadius:50,fontSize:".62rem",cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>Remove</button>
+                <button onClick={()=>setRvs(rvs.filter((_,j)=>j!==i))}
+                  style={{background:`${G.red}18`,color:G.red,border:`1px solid ${G.red}33`,
+                    padding:"3px 10px",borderRadius:50,fontSize:".62rem",cursor:"pointer",
+                    fontFamily:"'Poppins',sans-serif"}}>Remove</button>
               </div>
             </div>
           </div>
         ))}
-        <button onClick={()=>setRvs([...rvs,{name:"New Customer",loc:"Delhi",stars:5,text:"Amazing food!",av:"N",col:cols[rvs.length%cols.length]}])} style={{width:"100%",padding:"11px",background:T.card2,color:acc,border:`1px solid ${acc}44`,borderRadius:50,fontSize:".8rem",fontWeight:700,cursor:"pointer",fontFamily:"'Poppins',sans-serif",marginBottom:10}}>+ Add Review</button>
-        <button onClick={()=>{setReviews(rvs);onBack();}} style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",fontWeight:900,cursor:"pointer"}}>Save Reviews ✓</button>
+        <button onClick={()=>setRvs([...rvs,{name:"New Customer",loc:"Delhi",stars:5,
+          text:"Amazing food!",av:"N",col:cols[rvs.length%cols.length]}])}
+          style={{width:"100%",padding:"11px",background:T.card2,color:acc,
+            border:`1px solid ${acc}44`,borderRadius:50,fontSize:".8rem",fontWeight:700,
+            cursor:"pointer",fontFamily:"'Poppins',sans-serif",marginBottom:10}}>+ Add Review</button>
+        <button onClick={()=>{setReviews(rvs);onBack();}}
+          style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,
+            color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",
+            fontSize:".86rem",fontWeight:900,cursor:"pointer"}}>Save Reviews ✓</button>
       </div>
     </div>
   );
 }
 
+// ── AREAS SECTION ────────────────────────────────────────────────────────
 function AreasSection({areas,setAreas,T,acc,G,onBack}){
   const [avs,setAvs] = useState([...areas]);
   const [newA,setNewA] = useState("");
   return(
-    <div style={{fontFamily:"'Poppins',sans-serif",background:T.bg,minHeight:"100vh",maxWidth:430,margin:"0 auto",color:T.text,overflowX:"hidden"}}>
-      <div style={{display:"flex",alignItems:"center",gap:10,padding:"14px 16px",borderBottom:`1px solid ${T.border}`,position:"sticky",top:0,background:T.bg,zIndex:10}}>
-        <button onClick={()=>{setAreas(avs);onBack();}} style={{background:T.card2,border:`1px solid ${T.border}`,color:T.text,width:34,height:34,borderRadius:"50%",cursor:"pointer",fontSize:".9rem"}}>←</button>
+    <div style={{fontFamily:"'Poppins',sans-serif",background:T.bg,minHeight:"100vh",
+      maxWidth:430,margin:"0 auto",color:T.text,overflowX:"hidden"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,padding:"14px 16px",
+        borderBottom:`1px solid ${T.border}`,position:"sticky",top:0,background:T.bg,zIndex:10}}>
+        <button onClick={()=>{setAreas(avs);onBack();}}
+          style={{background:T.card2,border:`1px solid ${T.border}`,color:T.text,
+            width:34,height:34,borderRadius:"50%",cursor:"pointer",fontSize:".9rem"}}>←</button>
         <div style={{fontSize:"1rem",fontWeight:900,color:T.text}}>📍 Serving Areas</div>
       </div>
       <div style={{padding:"12px 14px"}}>
-        <div style={{fontSize:".7rem",color:T.muted2,marginBottom:12}}>These areas appear on the home screen and enquiry form.</div>
+        <div style={{fontSize:".7rem",color:T.muted2,marginBottom:12}}>
+          These areas appear on the home screen and enquiry form.</div>
         <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16}}>
           {avs.map((a,i)=>(
-            <div key={i} style={{display:"flex",alignItems:"center",gap:5,background:T.card,border:`1px solid ${T.border}`,borderRadius:50,padding:"6px 12px 6px 14px"}}>
+            <div key={i} style={{display:"flex",alignItems:"center",gap:5,background:T.card,
+              border:`1px solid ${T.border}`,borderRadius:50,padding:"6px 12px 6px 14px"}}>
               <span style={{fontSize:".78rem",fontWeight:600,color:T.text}}>{a}</span>
-              <button onClick={()=>setAvs(avs.filter((_,j)=>j!==i))} style={{background:"none",border:"none",color:G.red,cursor:"pointer",fontSize:".8rem",padding:0,lineHeight:1,marginLeft:2}}>✕</button>
+              <button onClick={()=>setAvs(avs.filter((_,j)=>j!==i))}
+                style={{background:"none",border:"none",color:G.red,cursor:"pointer",
+                  fontSize:".8rem",padding:0,lineHeight:1,marginLeft:2}}>✕</button>
             </div>
           ))}
         </div>
         <div style={{display:"flex",gap:8,marginBottom:14}}>
-          <input value={newA} onChange={e=>setNewA(e.target.value)} placeholder="Add area e.g. Noida"
+          <input value={newA} onChange={e=>setNewA(e.target.value)}
+            placeholder="Add area e.g. Noida"
             onKeyDown={e=>{if(e.key==="Enter"&&newA.trim()){setAvs([...avs,newA.trim()]);setNewA("");}}}
-            style={{flex:1,padding:"10px 13px",border:`1px solid ${T.border}`,borderRadius:11,fontFamily:"'Poppins',sans-serif",fontSize:".84rem",color:T.text,background:T.card2,outline:"none"}}/>
-          <button onClick={()=>{if(newA.trim()){setAvs([...avs,newA.trim()]);setNewA("");}}} style={{padding:"10px 16px",background:`${acc}22`,color:acc,border:`1px solid ${acc}44`,borderRadius:11,fontSize:".8rem",fontWeight:700,cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>+ Add</button>
+            style={{flex:1,padding:"10px 13px",border:`1px solid ${T.border}`,borderRadius:11,
+              fontFamily:"'Poppins',sans-serif",fontSize:".84rem",color:T.text,
+              background:T.card2,outline:"none"}}/>
+          <button onClick={()=>{if(newA.trim()){setAvs([...avs,newA.trim()]);setNewA("");}}}
+            style={{padding:"10px 16px",background:`${acc}22`,color:acc,
+              border:`1px solid ${acc}44`,borderRadius:11,fontSize:".8rem",fontWeight:700,
+              cursor:"pointer",fontFamily:"'Poppins',sans-serif"}}>+ Add</button>
         </div>
-        <button onClick={()=>{setAreas(avs);onBack();}} style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",fontWeight:900,cursor:"pointer"}}>Save Areas ✓</button>
+        <button onClick={()=>{setAreas(avs);onBack();}}
+          style={{width:"100%",padding:"12px",background:`linear-gradient(135deg,${acc},${G.goldd})`,
+            color:"#000",border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",
+            fontSize:".86rem",fontWeight:900,cursor:"pointer"}}>Save Areas ✓</button>
       </div>
     </div>
   );
 }
-// ─────────────────────────────────────────────────────────────────────────────
-// App_Part3.jsx  —  Paste AFTER Part 2 (lines 728–1153)
-// Contains: AdminInp, AdminTog, AdminSHdr, AdminPanel (full)
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+// ── SHARED ADMIN UI HELPERS (top-level — never remount) ──────────────────
 function AdminInp({label,value,onChange,type="text",ph="",T}){
   return(
     <div style={{marginBottom:12}}>
-      <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:5,textTransform:"uppercase",letterSpacing:".05em"}}>{label}</div>
-      <input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={ph} style={{width:"100%",padding:"11px 13px",border:`1px solid ${T.border}`,borderRadius:11,fontFamily:"'Poppins',sans-serif",fontSize:".84rem",color:T.text,background:T.card2,outline:"none"}}/>
+      <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:5,
+        textTransform:"uppercase",letterSpacing:".05em"}}>{label}</div>
+      <input type={type} value={value} onChange={e=>onChange(e.target.value)}
+        placeholder={ph}
+        style={{width:"100%",padding:"11px 13px",border:`1px solid ${T.border}`,
+          borderRadius:11,fontFamily:"'Poppins',sans-serif",fontSize:".84rem",
+          color:T.text,background:T.card2,outline:"none"}}/>
     </div>
   );
 }
 function AdminTog({on,onChange,label,T,acc}){
   return(
-    <div onClick={()=>onChange(!on)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",padding:"11px 0",borderTop:`1px solid ${T.border}`}}>
+    <div onClick={()=>onChange(!on)}
+      style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+        cursor:"pointer",padding:"11px 0",borderTop:`1px solid ${T.border}`}}>
       <span style={{fontSize:".8rem",color:T.text,fontFamily:"'Poppins',sans-serif"}}>{label}</span>
-      <div style={{width:44,height:24,borderRadius:50,background:on?acc:T.card3,position:"relative",transition:"background .2s",flexShrink:0}}>
-        <div style={{position:"absolute",top:3,left:on?23:3,width:18,height:18,borderRadius:"50%",background:"#fff",transition:"left .2s"}}/>
+      <div style={{width:44,height:24,borderRadius:50,background:on?acc:T.card3,
+        position:"relative",transition:"background .2s",flexShrink:0}}>
+        <div style={{position:"absolute",top:3,left:on?23:3,width:18,height:18,
+          borderRadius:"50%",background:"#fff",transition:"left .2s"}}/>
       </div>
     </div>
   );
 }
 function AdminSHdr({title,icon,onBack,T}){
   return(
-    <div style={{display:"flex",alignItems:"center",gap:10,padding:"14px 16px",borderBottom:`1px solid ${T.border}`,position:"sticky",top:0,background:T.bg,zIndex:10}}>
-      <button onClick={onBack} style={{background:T.card2,border:`1px solid ${T.border}`,color:T.text,width:34,height:34,borderRadius:"50%",cursor:"pointer",fontSize:".9rem"}}>←</button>
+    <div style={{display:"flex",alignItems:"center",gap:10,padding:"14px 16px",
+      borderBottom:`1px solid ${T.border}`,position:"sticky",top:0,background:T.bg,zIndex:10}}>
+      <button onClick={onBack} style={{background:T.card2,border:`1px solid ${T.border}`,
+        color:T.text,width:34,height:34,borderRadius:"50%",cursor:"pointer",fontSize:".9rem"}}>←</button>
       <div style={{fontSize:"1rem",fontWeight:900,color:T.text}}>{icon} {title}</div>
     </div>
   );
 }
+
 
 function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,combos,setCombos,offers,setOffers,reviews,setReviews,areas,setAreas}){
   const [sec,setSec]         = useState(null);
@@ -788,9 +907,12 @@ function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,c
     setNewItem({name:"",veg:true,img:"",active:true,occasions:[]});setAddingTo(null);show("✅ Added!");
   };
 
+
+
   const S={fontFamily:"'Poppins',sans-serif",background:T.bg,minHeight:"100vh",maxWidth:430,margin:"0 auto",color:T.text,overflowX:"hidden"};
   const Toast=()=>toast?<div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",background:T.card,border:`1px solid ${acc}`,borderRadius:12,padding:"10px 20px",fontSize:".8rem",fontWeight:700,color:acc,zIndex:999,whiteSpace:"nowrap"}}>{toast}</div>:null;
 
+  // DASHBOARD
   if(!sec) return(
     <div style={S}>
       <Toast/>
@@ -837,6 +959,7 @@ function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,c
     </div>
   );
 
+  // ── ORDER MANAGEMENT ────────────────────────────────────────────────────────
   if(sec==="orders") return(
     <div style={S}>
       <Toast/>
@@ -844,6 +967,7 @@ function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,c
       {billOrder&&<BillView order={billOrder} settings={settings} combos={combos} onClose={()=>setBillOrder(null)}/>}
       {showManual&&<ManualOrderForm T={T} acc={acc} food={food} combos={combos} onClose={()=>setShowManual(false)} onSave={o=>{setOrders(p=>[o,...p]);setShowManual(false);show("✅ Order saved!");}}/>}
       <AdminSHdr T={T} onBack={()=>setSec(null)} title="Order Management" icon="📦"/>
+      {/* Tabs row */}
       <div style={{padding:"10px 14px",display:"flex",gap:7,alignItems:"center",borderBottom:`1px solid ${T.border}`}}>
         <button onClick={()=>setShowManual(true)} style={{padding:"8px 16px",background:`linear-gradient(135deg,${acc},${G.goldd})`,color:"#000",border:"none",borderRadius:50,fontSize:".76rem",fontWeight:900,cursor:"pointer",fontFamily:"'Poppins',sans-serif",display:"flex",alignItems:"center",gap:5}}>
           <span>+</span> New Manual Order
@@ -854,6 +978,7 @@ function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,c
         {orders.length===0?<div style={{textAlign:"center",padding:"48px 0",color:T.muted}}><div style={{fontSize:"3rem",marginBottom:10}}>📭</div><div>No orders yet</div><div style={{fontSize:".72rem",marginTop:4}}>Tap "+ New Manual Order" to add</div></div>:
         orders.map(o=>(
           <div key={o.id} style={{background:T.card,borderRadius:18,padding:"13px 14px",marginBottom:12,border:`1px solid ${T.border}`}}>
+            {/* Header */}
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:7}}>
               <div>
                 <div style={{fontSize:".86rem",fontWeight:800,color:T.text}}>{o.name}</div>
@@ -864,11 +989,13 @@ function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,c
                 {o.source==="Manual"&&<span style={{fontSize:".55rem",color:T.muted,background:T.card2,padding:"1px 6px",borderRadius:50}}>Offline</span>}
               </div>
             </div>
+            {/* Details */}
             <div style={{background:T.card2,borderRadius:10,padding:"8px 10px",marginBottom:8,fontSize:".66rem",color:T.muted2,lineHeight:1.7}}>
               <div>🎉 {o.occasion} · 📅 {o.date} · 👥 {o.pax} guests · 🥗 {o.diet}</div>
               {o.sel&&<div>🍽️ {[...(o.sel.starters||[]),(o.sel.mains||[]),(o.sel.breads||[]),(o.sel.rice||[]),(o.sel.desserts||[])].flat().map(i=>i.name).join(", ")||"No items"}</div>}
               {(o.pricePerPerson||0)>0&&<div style={{color:acc,fontWeight:700}}>₹{o.pricePerPerson}/pp × {o.pax} = ₹{(o.pricePerPerson*o.pax).toLocaleString()}</div>}
             </div>
+            {/* Actions */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:5}}>
               <button onClick={()=>setOrders(orders.map(x=>x.id===o.id?{...x,status:"Confirmed"}:x))} style={{padding:"7px 4px",background:"#15803D18",color:G.green,border:`1px solid #15803D44`,borderRadius:8,fontSize:".6rem",fontWeight:700,cursor:"pointer",fontFamily:"'Poppins',sans-serif",textAlign:"center"}}>✅ Confirm</button>
               <button onClick={()=>setKotOrder(o)} style={{padding:"7px 4px",background:`${G.blue}18`,color:G.blue,border:`1px solid ${G.blue}44`,borderRadius:8,fontSize:".6rem",fontWeight:700,cursor:"pointer",fontFamily:"'Poppins',sans-serif",textAlign:"center"}}>🗒️ KOT</button>
@@ -880,7 +1007,7 @@ function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,c
       </div>
     </div>
   );
-
+  // ── MENU ITEMS (with occasion filter) ──────────────────────────────────────
   if(sec==="menu"){
     const cats=[["starters","Starters","🍢"],["mains","Mains","🍛"],["breads","Breads","🫓"],["rice","Rice","🍚"],["desserts","Desserts","🍮"]];
     const OccasionPicker=({selected=[],onChange})=>(
@@ -890,8 +1017,7 @@ function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,c
         <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
           {OCCASIONS.map(o=>{
             const checked=selected.includes(o.id);
-            return(
-              <div key={o.id} onClick={()=>{const n=checked?selected.filter(x=>x!==o.id):[...selected,o.id];onChange(n);}}
+            return(              <div key={o.id} onClick={()=>{const n=checked?selected.filter(x=>x!==o.id):[...selected,o.id];onChange(n);}}
                 style={{padding:"5px 10px",borderRadius:50,border:`1.5px solid ${checked?acc:T.border}`,background:checked?`${acc}22`:"transparent",cursor:"pointer",fontSize:".66rem",fontWeight:checked?700:500,color:checked?acc:T.muted,transition:"all .15s"}}>
                 {o.emoji} {o.label}
               </div>
@@ -905,11 +1031,14 @@ function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,c
     return(
       <div style={S}>
         <Toast/><AdminSHdr T={T} onBack={()=>setSec(null)} title="Menu Items" icon="🍽️"/>
+
+        {/* Edit sheet */}
         {editItem&&(
           <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:500,display:"flex",alignItems:"flex-end"}} onClick={()=>setEditItem(null)}>
             <div style={{background:T.card,borderRadius:"22px 22px 0 0",width:"100%",maxWidth:430,padding:"18px 18px 30px",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
               <div style={{height:4,width:40,background:T.card3,borderRadius:50,margin:"0 auto 14px"}}/>
               <div style={{fontSize:".9rem",fontWeight:900,color:T.text,marginBottom:12}}>Edit: {editItem.item.name}</div>
+              {/* Image preview */}
               <div style={{height:120,borderRadius:14,overflow:"hidden",marginBottom:12,background:T.card2,border:`1px solid ${T.border}`,position:"relative"}}>
                 {editItem.item.img
                   ?<img src={editItem.item.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>e.target.style.display="none"}/>
@@ -930,6 +1059,8 @@ function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,c
             </div>
           </div>
         )}
+
+        {/* Add sheet */}
         {addingTo&&(
           <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:500,display:"flex",alignItems:"flex-end"}} onClick={()=>setAddingTo(null)}>
             <div style={{background:T.card,borderRadius:"22px 22px 0 0",width:"100%",maxWidth:430,padding:"18px 18px 30px",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
@@ -945,6 +1076,7 @@ function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,c
             </div>
           </div>
         )}
+
         <div style={{padding:"10px 14px"}}>
           {cats.map(([cat,label,icon])=>(
             <div key={cat} style={{marginBottom:18}}>
@@ -981,6 +1113,7 @@ function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,c
     );
   }
 
+  // ── PRICING ─────────────────────────────────────────────────────────────────
   if(sec==="combos") return(
     <div style={S}>
       <Toast/><AdminSHdr T={T} onBack={()=>setSec(null)} title="Pricing & Combinations" icon="💰"/>
@@ -988,7 +1121,8 @@ function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,c
         <div style={{background:T.card,borderRadius:14,padding:"12px 14px",marginBottom:14,border:`1px solid ${T.border}`}}>
           <div style={{fontSize:".76rem",fontWeight:800,color:T.text,marginBottom:7}}>👥 Max Guests per Booking</div>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <input type="number" value={settings.maxGuests} onChange={e=>setSettings({...settings,maxGuests:Number(e.target.value)})} style={{width:80,padding:"9px",border:`1px solid ${acc}`,borderRadius:10,fontFamily:"'Poppins',sans-serif",fontSize:"1.1rem",fontWeight:900,color:acc,background:T.card2,outline:"none",textAlign:"center"}}/>
+            <input type="number" value={settings.maxGuests} onChange={e=>setSettings({...settings,maxGuests:Number(e.target.value)})}
+              style={{width:80,padding:"9px",border:`1px solid ${acc}`,borderRadius:10,fontFamily:"'Poppins',sans-serif",fontSize:"1.1rem",fontWeight:900,color:acc,background:T.card2,outline:"none",textAlign:"center"}}/>
             <div style={{fontSize:".7rem",color:T.muted}}>Max guests per booking</div>
           </div>
         </div>
@@ -996,9 +1130,11 @@ function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,c
           <div style={{fontSize:".76rem",fontWeight:800,color:T.text,marginBottom:4}}>GST Settings</div>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <div style={{fontSize:".7rem",color:T.muted}}>GST %</div>
-            <input type="number" value={settings.gstPercent||5} onChange={e=>setSettings({...settings,gstPercent:Number(e.target.value)})} style={{width:64,padding:"7px 10px",border:`1px solid ${T.border}`,borderRadius:9,fontFamily:"'Poppins',sans-serif",fontSize:".88rem",fontWeight:900,color:T.text,background:T.card2,outline:"none",textAlign:"center"}}/>
+            <input type="number" value={settings.gstPercent||5} onChange={e=>setSettings({...settings,gstPercent:Number(e.target.value)})}
+              style={{width:64,padding:"7px 10px",border:`1px solid ${T.border}`,borderRadius:9,fontFamily:"'Poppins',sans-serif",fontSize:".88rem",fontWeight:900,color:T.text,background:T.card2,outline:"none",textAlign:"center"}}/>
             <div style={{fontSize:".7rem",color:T.muted}}>GSTIN</div>
-            <input value={settings.gstin||""} onChange={e=>setSettings({...settings,gstin:e.target.value})} style={{flex:1,padding:"7px 10px",border:`1px solid ${T.border}`,borderRadius:9,fontFamily:"'Poppins',sans-serif",fontSize:".78rem",color:T.text,background:T.card2,outline:"none"}}/>
+            <input value={settings.gstin||""} onChange={e=>setSettings({...settings,gstin:e.target.value})}
+              style={{flex:1,padding:"7px 10px",border:`1px solid ${T.border}`,borderRadius:9,fontFamily:"'Poppins',sans-serif",fontSize:".78rem",color:T.text,background:T.card2,outline:"none"}}/>
           </div>
         </div>
         {combos.map((c,i)=>(
@@ -1033,6 +1169,7 @@ function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,c
     </div>
   );
 
+  // ── OFFERS ───────────────────────────────────────────────────────────────────
   if(sec==="offers") return(
     <div style={S}>
       <Toast/><AdminSHdr T={T} onBack={()=>setSec(null)} title="Offers & Discounts" icon="🎁"/>
@@ -1066,10 +1203,16 @@ function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,c
     </div>
   );
 
+  // ── BUSINESS — standalone component, no hooks-in-if violation ───────────────
   if(sec==="business") return(
-    <BusinessForm settings={settings} setSettings={setSettings} T={T} acc={acc} G={G} show={show} onBack={()=>setSec(null)}/>
+    <BusinessForm
+      settings={settings} setSettings={setSettings}
+      T={T} acc={acc} G={G} show={show}
+      onBack={()=>setSec(null)}
+    />
   );
 
+  // ── APPEARANCE ───────────────────────────────────────────────────────────────
   if(sec==="appearance") return(
     <div style={S}>
       <Toast/><AdminSHdr T={T} onBack={()=>setSec(null)} title="Appearance" icon="🎨"/>
@@ -1097,6 +1240,7 @@ function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,c
             <input value={settings.accent} onChange={e=>setSettings({...settings,accent:e.target.value})} style={{flex:1,padding:"7px 10px",border:`1px solid ${T.border}`,borderRadius:8,fontFamily:"'Poppins',sans-serif",fontSize:".8rem",color:T.text,background:T.card2,outline:"none"}}/>
           </div>
         </div>
+        {/* Preview */}
         <div style={{background:T.card,borderRadius:16,padding:"14px",marginBottom:14,border:`1px solid ${T.border}`}}>
           <div style={{fontSize:".76rem",fontWeight:800,color:T.text,marginBottom:10}}>Preview</div>
           <div style={{display:"flex",gap:8,alignItems:"center",background:T.bg,borderRadius:12,padding:"12px"}}>
@@ -1110,6 +1254,7 @@ function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,c
     </div>
   );
 
+  // ── PASSWORD ─────────────────────────────────────────────────────────────────
   if(sec==="password") return(
     <div style={S}>
       <AdminSHdr T={T} onBack={()=>setSec(null)} title="Change Password" icon="🔐"/>
@@ -1133,6 +1278,7 @@ function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,c
     </div>
   );
 
+  // ── REVIEWS ─────────────────────────────────────────────────────────────────
   if(sec==="reviews") return <ReviewsSection reviews={reviews} setReviews={setReviews} T={T} acc={acc} G={G} onBack={()=>setSec(null)}/>;
   if(sec==="areas") return <AreasSection areas={areas} setAreas={setAreas} T={T} acc={acc} G={G} onBack={()=>setSec(null)}/>;
   if(sec==="pages") return(
@@ -1163,10 +1309,6 @@ function AdminPanel({onExit,orders,setOrders,settings,setSettings,food,setFood,c
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN APP
 // ═══════════════════════════════════════════════════════════════════════════════
-// ─────────────────────────────────────────────────────────────────────────────
-// App_Part4.jsx  —  Paste AFTER Part 3 (lines 1154–end)
-// Contains: export default function App() — the main component
-// ─────────────────────────────────────────────────────────────────────────────
 export default function App(){
   const [settings,setSettings] = useState(DEF_SETTINGS);
   const [food,setFood]         = useState(DEF_FOOD);
@@ -1202,28 +1344,6 @@ export default function App(){
   const acc = settings.accent;
   const T   = settings.theme==="light" ? LIGHT : DARK;
 
-  // ── FIX 1: Define toggleSel ──────────────────────────────────────────────
-  const toggleSel = (cat, item) => {
-    setSel(prev => {
-      const cur = prev[cat] || [];
-      const exists = cur.find(i => i.id === item.id);
-      return {...prev, [cat]: exists ? cur.filter(i => i.id !== item.id) : [...cur, item]};
-    });
-  };
-
-  // ── FIX 2: Define completed (which steps have selections) ────────────────
-  const completed = {
-    starters: sel.starters.length > 0,
-    mains:    sel.mains.length > 0,
-    breads:   sel.breads.length > 0,
-    rice:     sel.rice.length > 0,
-    desserts: sel.desserts.length > 0,
-    condiments: sel.condiments.length > 0,
-  };
-
-  // ── FIX 3: Define allReady (mains required, rest optional) ───────────────
-  const allReady = sel.mains.length > 0 && date;
-
   // ── LIVE PRICE CALCULATOR ────────────────────────────────────────────────
   const calcPrice = (curSel, paxCount) => {
     const starters  = curSel.starters?.length  || 0;
@@ -1232,9 +1352,12 @@ export default function App(){
     const rice      = curSel.rice?.length       || 0;
     const desserts  = curSel.desserts?.length   || 0;
 
+    // Base package: ₹199 = 1 starter + 1 main + 1 bread + 1 rice + 1 dessert
+    // Each extra item adds to the price
     const BASE   = 199;
     const RATES  = { starters:50, mains:50, breads:20, rice:30, desserts:30 };
 
+    // Try to match a combo tier first (better value for customer)
     const matched = [...combos].filter(c=>c.active).sort((a,b)=>b.price-a.price).find(c=>
       starters >= c.starters && mains >= c.mains &&
       breads   >= c.breads   && rice  >= c.rice  && desserts >= c.desserts
@@ -1245,29 +1368,34 @@ export default function App(){
       ppRate = matched.price;
       tier   = matched.label;
     } else {
+      // Fallback: base 199 + per-item pricing for extras above 1
       const extraS = Math.max(0, starters - 1);
       const extraM = Math.max(0, mains    - 1);
       const extraB = Math.max(0, breads   - 1);
       const extraR = Math.max(0, rice     - 1);
       const extraD = Math.max(0, desserts - 1);
-      ppRate = BASE + extraS*RATES.starters + extraM*RATES.mains + extraB*RATES.breads + extraR*RATES.rice + extraD*RATES.desserts;
+      ppRate = BASE
+        + extraS * RATES.starters
+        + extraM * RATES.mains
+        + extraB * RATES.breads
+        + extraR * RATES.rice
+        + extraD * RATES.desserts;
       tier = "Custom";
     }
 
     const total = (ppRate||0) * (paxCount||1);
     return { ppRate, tier, total };
   };
-
-  // ── Hero image rotation ──────────────────────────────────────────────────
+  // ── Hero image rotation ─────────────────────────────────────────────
   useEffect(()=>{
     const t=setInterval(()=>setHeroIdx(i=>(i+1)%HERO_IMGS.length),3500);
     return()=>clearInterval(t);
   },[]);
 
-  // ── Satvik lock ──────────────────────────────────────────────────────────
+  // ── Satvik lock ──────────────────────────────────────────────────────
   useEffect(()=>{if(occasion?.vegOnly) setDiet("veg");},[occasion]);
 
-  // ── WhatsApp send ────────────────────────────────────────────────────────
+  // ── WhatsApp send from confirm screen ────────────────────────────────
   const sendWA=()=>{
     const num=(settings.whatsapp||"").replace(/\D/g,"")||"918700642925";
     const starters = sel.starters.map(i=>i.name).join(", ")||"None";
@@ -1290,21 +1418,14 @@ export default function App(){
       `📦 Package: ${p.tier}\n\n`+
       `📝 Notes: ${form.notes||"None"}`
     );
-    setOrders(prev=>[{id:Date.now(),name:form.name,phone:form.phone,
+    setOrders(p=>[{id:Date.now(),name:form.name,phone:form.phone,
       date,occasion:occasion?.label,pax,diet,sel,area:form.area,
       pricePerPerson:p.ppRate,status:"New",source:"Site",
-      time:new Date().toLocaleTimeString()},...prev]);
+      time:new Date().toLocaleTimeString()},...p]);
     window.open(`https://wa.me/${num}?text=${msg}`,"_blank");
     setSent(true);
   };
 
-  // ── startBuilder helper ──────────────────────────────────────────────────
-  const startBuilder = (e) => {
-    setEntry(e);
-    setSel({starters:[],mains:[],breads:[],rice:[],desserts:[],condiments:[]});
-    setStep(0);
-    setScreen("builder");
-  };
 
   const css=`
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
@@ -1343,14 +1464,17 @@ export default function App(){
     </>
   );
 
-  // ── Occasion + diet filter ───────────────────────────────────────────────
+
+  // ── Occasion + diet filter for menu builder ─────────────────────────
   const filterFood = (items) => {
     let out = items.filter(i => i.active !== false);
+    // Diet filter
     if(diet === "veg" || diet === "satvik"){
       out = out.filter(i => i.veg);
     } else if(diet === "nonveg"){
       out = out.filter(i => !i.veg);
     }
+    // Occasion filter
     if(occasion){
       out = out.filter(i => {
         const occ = i.occasions || [];
@@ -1391,7 +1515,7 @@ export default function App(){
     </div>
   );
 
-  // ── CHEF BOX PICKER ──────────────────────────────────────────────────────
+  // ── CHEF BOX PICKER (5 items mandatory) ──────────────────────────────────
   if(screen==="builder" && entry?.id==="box"){
     const allFoodItems = [...(food.starters||[]),...(food.mains||[]),...(food.breads||[]),...(food.rice||[]),...(food.desserts||[])].filter(i=>i.active!==false);
     const filteredBox  = filterFood(allFoodItems);
@@ -1406,16 +1530,17 @@ export default function App(){
         <style>{css}</style>
         <GlowBg color={acc}/>
         <div style={{position:"relative",zIndex:1}}>
+          {/* Header */}
           <div style={{display:"flex",alignItems:"center",gap:9,padding:"14px 14px 10px"}}>
             <button onClick={()=>{setScreen("home");setChefBoxSel([]);}} style={{background:T.card,border:`1px solid ${T.border}`,color:T.text,width:33,height:33,borderRadius:"50%",cursor:"pointer",fontSize:".82rem",flexShrink:0}}>←</button>
             <div style={{flex:1}}><div style={{fontSize:".54rem",color:T.muted,textTransform:"uppercase"}}>Build Your Order</div><div style={{fontSize:".9rem",fontWeight:900,color:T.text}}>📦 Chef Box</div></div>
             <Logo size={34} accent={acc} src={settings.logoImg||"/logo.jpg"}/>
           </div>
+          {/* Progress pill */}
           <div style={{margin:"0 14px 12px"}}>
             <div style={{background:T.card2,borderRadius:14,padding:"10px 14px",border:`1px solid ${chefBoxSel.length===5?acc+"55":T.border}`}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                <div style={{fontSize:".72rem",fontWeight:800,color:chefBoxSel.length===5?acc:T.text}}>{chefBoxSel.length}/5 items selected {chefBoxSel.length===5?"✓":""}</div>
-                <div style={{fontSize:".68rem",color:T.muted}}>Exactly 5 required</div>
+                <div style={{fontSize:".72rem",fontWeight:800,color:chefBoxSel.length===5?acc:T.text}}>{chefBoxSel.length}/5 items selected {chefBoxSel.length===5?"✓":""}</div>                <div style={{fontSize:".68rem",color:T.muted}}>Exactly 5 required</div>
               </div>
               <div style={{display:"flex",gap:6}}>
                 {Array.from({length:5},(_,i)=>(
@@ -1424,6 +1549,7 @@ export default function App(){
               </div>
             </div>
           </div>
+          {/* Date + Pax quick row */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,margin:"0 14px 12px"}}>
             <div>
               <div style={{fontSize:".6rem",fontWeight:700,color:T.muted,marginBottom:4,textTransform:"uppercase"}}>Event Date *</div>
@@ -1438,6 +1564,7 @@ export default function App(){
               </div>
             </div>
           </div>
+          {/* Selected chips */}
           {chefBoxSel.length>0&&<div style={{display:"flex",gap:5,overflowX:"auto",padding:"0 14px 9px"}}>
             {chefBoxSel.map(item=>(
               <div key={item.id} onClick={()=>toggleBox(item)} style={{flexShrink:0,display:"flex",alignItems:"center",gap:4,background:`${acc}18`,border:`1px solid ${acc}44`,borderRadius:50,padding:"3px 9px 3px 4px",cursor:"pointer"}}>
@@ -1447,6 +1574,7 @@ export default function App(){
               </div>
             ))}
           </div>}
+          {/* All dishes grid */}
           <div style={{padding:"0 14px",display:"flex",gap:9,flexWrap:"wrap",justifyContent:"space-between"}}>
             {filteredBox.map(item=>{
               const on=!!chefBoxSel.find(i=>i.id===item.id);
@@ -1463,6 +1591,7 @@ export default function App(){
               );
             })}
           </div>
+          {/* Confirm button */}
           <div style={{padding:"12px 14px 0"}}>
             {!canConfirm&&<div style={{textAlign:"center",fontSize:".65rem",color:T.muted,marginBottom:7}}>{chefBoxSel.length<5?`Select ${5-chefBoxSel.length} more item${5-chefBoxSel.length!==1?"s":""}`:!date?"Please select event date":""}</div>}
             <button onClick={()=>{if(canConfirm){setSel({starters:chefBoxSel,mains:[],breads:[],rice:[],desserts:[],condiments:[]});setScreen("confirm");}}} style={{width:"100%",padding:"13px",background:canConfirm?`linear-gradient(135deg,${acc},${G.goldd})`:"#1A1A1A",color:canConfirm?"#000":T.muted,border:"none",borderRadius:50,fontFamily:"'Poppins',sans-serif",fontSize:".86rem",fontWeight:900,cursor:canConfirm?"pointer":"not-allowed",transition:"all .2s"}}>
@@ -1496,6 +1625,7 @@ export default function App(){
             <Logo size={34} accent={acc}/>
           </div>
 
+          {/* ── LIVE PRICE BAR ── */}
           {(cur.key!=="start")&&(()=>{
             const {tier,ppRate,total}=calcPrice(sel,pax);
             return(
@@ -1513,7 +1643,6 @@ export default function App(){
               </div>
             );
           })()}
-
           {cur.key==="start"&&(
             <div style={{flex:1,overflowY:"auto",padding:"0 14px 8px"}}>
               {occasion?.vegOnly&&<div style={{background:"linear-gradient(135deg,#4C1D95,#7C3AED)",borderRadius:14,padding:"11px 13px",marginBottom:12,display:"flex",alignItems:"center",gap:10}}>
@@ -1536,6 +1665,7 @@ export default function App(){
                 </div>
                 <input type="date" value={date} onChange={e=>{setDate(e.target.value);setDateErr(false);}} style={{width:"100%",padding:"11px 13px",border:`1.5px solid ${dateErr?G.red:date?acc+"55":T.border}`,borderRadius:12,fontFamily:"'Poppins',sans-serif",fontSize:".88rem",color:date?T.text:T.muted,background:T.card2,outline:"none",transition:"border-color .2s"}}/>
               </div>
+              {/* PAX */}
               <div style={{marginBottom:12}}>
                 <div style={{fontSize:".64rem",fontWeight:700,color:T.muted,textTransform:"uppercase",marginBottom:8}}>Number of Guests *</div>
                 <div style={{background:T.card2,borderRadius:18,padding:"16px 14px",border:`1px solid ${T.border}`,display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
@@ -1629,7 +1759,7 @@ export default function App(){
             <div style={{fontSize:"1.35rem",fontWeight:900,marginBottom:5,color:T.text}}>Order <span style={{color:acc}}>Sent!</span></div>
             <div style={{fontSize:".8rem",color:T.muted2,lineHeight:1.7,marginBottom:16}}>Your custom menu has been sent. We confirm within 2 hours.</div>
             <a href={`https://wa.me/${settings.whatsapp.replace(/\D/g,"")}?text=${encodeURIComponent("Hi")}`} target="_blank" rel="noreferrer" style={{background:"linear-gradient(135deg,#16A34A,#15803D)",color:"#fff",padding:"12px",borderRadius:50,fontSize:".86rem",fontWeight:900,textDecoration:"none",display:"block",width:"100%",textAlign:"center",marginBottom:9}}>💬 Open WhatsApp</a>
-            <button onClick={()=>{setSent(false);setSel({starters:[],mains:[],breads:[],rice:[],desserts:[],condiments:[]});setStep(0);setOccasion(null);setDate("");setScreen("home");}} style={{background:"transparent",color:T.muted,border:`1px solid ${T.border}`,padding:"10px",borderRadius:50,fontSize:".78rem",cursor:"pointer",fontFamily:"'Poppins',sans-serif",width:"100%"}}>Plan Another</button>
+            <button onClick={()=>{setSent(false);setSel({starters:[],mains:[],breads:[],rice:[],desserts:[]});setStep(0);setOccasion(null);setDate("");setScreen("home");}} style={{background:"transparent",color:T.muted,border:`1px solid ${T.border}`,padding:"10px",borderRadius:50,fontSize:".78rem",cursor:"pointer",fontFamily:"'Poppins',sans-serif",width:"100%"}}>Plan Another</button>
           </div>
         ):(
           <>
@@ -1639,18 +1769,18 @@ export default function App(){
                 <div><div style={{fontSize:"1.2rem"}}>{occasion?.emoji||entry?.emoji||"🎉"}</div><div style={{fontSize:".68rem",fontWeight:700,marginTop:3,color:T.text}}>{occasion?.label||entry?.label||"General"}</div><div style={{fontSize:".56rem",color:T.muted}}>Occasion</div></div>
                 <div><div style={{fontSize:".63rem",color:T.muted,marginTop:4}}>📅 {date}</div><div style={{fontSize:".63rem",color:T.muted,marginTop:4}}>👥 {pax} guests</div><div style={{fontSize:".63rem",color:T.muted,marginTop:4}}>🥗 {diet}</div></div>
                 <div>
-                  <div style={{fontSize:".7rem",fontWeight:700,color:acc,marginTop:4}}>{entry?.label}</div>
-                  {(()=>{const p=calcPrice(sel,pax);return(<><div style={{fontSize:"1rem",fontWeight:900,color:acc,marginTop:4}}>₹{p.total.toLocaleString()}</div><div style={{fontSize:".58rem",color:T.muted}}>₹{p.ppRate}/pp · {pax} guests</div><div style={{fontSize:".58rem",color:T.muted2}}>{p.tier} pkg</div></>);})()}
-                </div>
+                <div style={{fontSize:".7rem",fontWeight:700,color:acc,marginTop:4}}>{entry?.label}</div>
+                {(()=>{const p=calcPrice(sel,pax);return(<><div style={{fontSize:"1rem",fontWeight:900,color:acc,marginTop:4}}>₹{p.total.toLocaleString()}</div><div style={{fontSize:".58rem",color:T.muted}}>₹{p.ppRate}/pp · {pax} guests</div><div style={{fontSize:".58rem",color:T.muted2}}>{p.tier} pkg</div></>);})()}
+              </div>
               </div>
             </div>
             {[["🍢","starters","Starters"],["🍛","mains","Mains"],["🫓","breads","Breads"],["🍚","rice","Rice"],["🍮","desserts","Desserts"],["🫙","condiments","Condiments"]].map(([ic,key,lb])=>(
               <div key={key} style={{margin:"0 13px 8px",background:T.card,borderRadius:14,padding:"10px 12px",border:`1px solid ${T.border}`}}>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:(sel[key]||[]).length>0?7:0}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:sel[key].length>0?7:0}}>
                   <div style={{fontSize:".68rem",fontWeight:800,color:acc}}>{ic} {lb}</div>
-                  <div style={{fontSize:".56rem",color:(sel[key]||[]).length>0?G.green:T.muted}}>{(sel[key]||[]).length>0?`${sel[key].length} items`:"Skipped"}</div>
+                  <div style={{fontSize:".56rem",color:sel[key].length>0?G.green:T.muted}}>{sel[key].length>0?`${sel[key].length} items`:"Skipped"}</div>
                 </div>
-                {(sel[key]||[]).length>0&&<div style={{display:"flex",gap:6,overflowX:"auto"}}>
+                {sel[key].length>0&&<div style={{display:"flex",gap:6,overflowX:"auto"}}>
                   {sel[key].map(item=>(
                     <div key={item.id} style={{flexShrink:0,textAlign:"center",width:50}}>
                       <div style={{width:44,height:44,borderRadius:10,overflow:"hidden",border:`1.5px solid ${acc}44`,marginBottom:2}}><img src={item.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/></div>
@@ -1670,9 +1800,8 @@ export default function App(){
               ))}
               <div style={{marginBottom:8}}>
                 <label style={{display:"block",fontSize:".59rem",fontWeight:700,color:T.muted,marginBottom:3,textTransform:"uppercase"}}>Area</label>
-                {/* FIX 4: Use areas state variable instead of AREAS constant */}
                 <select value={form.area} onChange={e=>setForm({...form,area:e.target.value})} style={{width:"100%",padding:"9px 11px",border:`1px solid ${T.border}`,borderRadius:10,fontFamily:"'Poppins',sans-serif",fontSize:".82rem",color:T.text,background:T.card2,outline:"none"}}>
-                  {areas.map(a=><option key={a}>{a}</option>)}
+                  {AREAS.map(a=><option key={a}>{a}</option>)}
                 </select>
               </div>
               <div style={{marginBottom:12}}>
@@ -1716,6 +1845,7 @@ export default function App(){
             </div>
           </div>
 
+          {/* Specialities */}
           <div style={{padding:"15px 16px 0"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
               <div><div style={{fontSize:".56rem",color:T.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:2}}>Signature Dishes</div><div style={{fontSize:".9rem",fontWeight:900,color:T.text}}>Our <span style={{color:acc}}>Specialities</span></div></div>
@@ -1737,6 +1867,7 @@ export default function App(){
             </div>
           </div>
 
+          {/* Food entries */}
           <div style={{padding:"14px 16px 0"}}>
             <div style={{fontSize:".86rem",fontWeight:800,marginBottom:11,color:T.text}}>What are you planning?</div>
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -1777,8 +1908,7 @@ export default function App(){
           </div>
           <div style={{padding:"13px 16px 0"}}>
             <div style={{fontSize:".72rem",fontWeight:600,color:T.muted,marginBottom:6}}>📍 Serving Delhi NCR</div>
-            {/* FIX 5: Use areas state variable instead of AREAS constant */}
-            <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{areas.map(a=><div key={a} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:50,padding:"3px 9px",fontSize:".58rem",fontWeight:500,color:T.muted2}}>{a}</div>)}</div>
+            <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{AREAS.map(a=><div key={a} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:50,padding:"3px 9px",fontSize:".58rem",fontWeight:500,color:T.muted2}}>{a}</div>)}</div>
           </div>
         </>}
 
@@ -1796,8 +1926,7 @@ export default function App(){
         {section==="reviews"&&<>
           <div style={{padding:"0 16px 11px"}}><div style={{fontSize:".54rem",color:T.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:2}}>Delhi NCR Loves Us</div><div style={{fontSize:"1.2rem",fontWeight:900,color:T.text}}>What <span style={{color:acc}}>They Say</span></div></div>
           <div style={{display:"flex",flexDirection:"column",gap:8,padding:"0 12px"}}>
-            {/* FIX 6: Use reviews state variable instead of REVIEWS constant */}
-            {reviews.map((r,i)=>(
+            {REVIEWS.map((r,i)=>(
               <div key={i} style={{background:T.card,borderRadius:16,padding:"12px 13px",border:`1px solid ${T.border}`,position:"relative",overflow:"hidden"}}>
                 <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,${r.col},transparent)`}}/>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:7}}>
@@ -1812,6 +1941,8 @@ export default function App(){
 
         {section==="about"&&<>
           <div style={{padding:"0 16px 11px"}}><div style={{fontSize:".54rem",color:T.muted,textTransform:"uppercase",letterSpacing:".08em",marginBottom:2}}>Our Story</div><div style={{fontSize:"1.2rem",fontWeight:900,color:T.text}}>About <span style={{color:acc}}>Us</span></div></div>
+
+          {/* Article-style: small founder image left, info right */}
           <div style={{margin:"0 12px 12px",background:T.card,borderRadius:18,padding:"14px",border:`1px solid ${T.border}`,display:"flex",gap:13,alignItems:"flex-start"}}>
             <div style={{flexShrink:0,width:80,height:80,borderRadius:16,overflow:"hidden",border:`2px solid ${acc}44`,background:T.card2}}>
               <img src={settings.founderImg||"https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=300&q=85"} alt="Founder" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
@@ -1829,9 +1960,13 @@ export default function App(){
               </div>
             </div>
           </div>
+
+          {/* About text */}
           <div style={{margin:"0 12px 11px",background:T.card,borderRadius:16,padding:"14px",border:`1px solid ${T.border}`}}>
             <div style={{fontSize:".8rem",color:T.muted2,lineHeight:1.75}}>{settings.about}</div>
           </div>
+
+          {/* Values grid */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7,margin:"0 12px"}}>
             {[["🥗","Fresh Daily","Local sourced"],["🏠","Home Style","Family recipes"],["📦","Hygienic","Packed safely"],["⭐","Consistent","Every event"]].map(([ic,h,d])=>(
               <div key={h} style={{background:T.card,borderRadius:12,padding:"11px",border:`1px solid ${T.border}`}}>
